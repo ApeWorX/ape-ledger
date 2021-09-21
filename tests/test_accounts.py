@@ -6,6 +6,7 @@ from conftest import TEST_ADDRESS, TEST_ALIAS, TEST_HD_PATH, assert_account
 from eth_account.messages import SignableMessage
 
 from ape_ledger.accounts import AccountContainer, LedgerAccount
+from ape_ledger.exceptions import LedgerSigningError
 
 
 def create_account(account_path, hd_path):
@@ -59,9 +60,51 @@ class TestLedgerAccount:
             message = SignableMessage(
                 version=b"E", header=b"thereum Signed Message:\n6", body=b"I\xe2\x99\xa5SF"
             )
-            actual = account.sign_message(message)
+            actual_v, actual_r, actual_s = account.sign_message(message)
 
+            assert actual_v == b"v"
+            assert actual_r == b"r"
+            assert actual_s == b"s"
             spy.sign_raw_message.assert_called_once_with(message)
-            assert actual.v == b"v"
-            assert actual.r == b"r"
-            assert actual.s == b"s"
+
+    def test_sign_message_when_structured_message_type(
+        self, mocker, runner, mock_container, account_connection
+    ):
+        with runner.isolated_filesystem():
+            create_account("account.json", TEST_HD_PATH)
+            # noinspection PyArgumentList
+            account = LedgerAccount(mock_container, Path("account.json"))
+            spy = mocker.spy(LedgerAccount, "_client")
+            spy.sign_structured_message.return_value = (b"v", b"r", b"s")
+
+            message = SignableMessage(
+                version=b"1", header=b"thereum Signed Message:\n6", body=b"I\xe2\x99\xa5SF"
+            )
+            actual_v, actual_r, actual_s = account.sign_message(message)
+
+            assert actual_v == b"v"
+            assert actual_r == b"r"
+            assert actual_s == b"s"
+            spy.sign_structured_message.assert_called_once_with(message)
+
+    def test_sign_message_unsupported_version_byte(
+        self, runner, mock_container, account_connection
+    ):
+        with runner.isolated_filesystem():
+            create_account("account.json", TEST_HD_PATH)
+            # noinspection PyArgumentList
+            account = LedgerAccount(mock_container, Path("account.json"))
+
+            unsupported_version = b"X"
+            message = SignableMessage(
+                version=unsupported_version,
+                header=b"thereum Signed Message:\n6",
+                body=b"I\xe2\x99\xa5SF",
+            )
+            with pytest.raises(LedgerSigningError) as err:
+                account.sign_message(message)
+
+            assert (
+                str(err.value)
+                == f"Unsupported message-signing specification, (version={unsupported_version})"
+            )
