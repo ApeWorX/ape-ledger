@@ -94,8 +94,7 @@ def add(alias, hd_path):
     help="Don't ask for confirmation when removing the account",
 )
 def remove(alias, skip_confirmation):
-    """Remove a Ledger account from your ape configuration.
-    (The account will not be deleted from the Ledger hardware device)"""
+    """Remove a Ledger account from your ape configuration"""
 
     if not _user_agrees_to_remove(skip_confirmation, alias):
         notify("INFO", f"'{alias}' was not removed")
