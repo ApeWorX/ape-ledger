@@ -44,6 +44,7 @@ class HDBasePath(HDPath):
     DEFAULT = "m/44'/60'/{x}'/0/0"
 
     def __init__(self, base_path=DEFAULT):
+        base_path = base_path or self.DEFAULT
         base_path = base_path.rstrip("/")
         base_path = base_path if "{x}" in base_path else f"{base_path}/{{x}}"
         super().__init__(base_path)

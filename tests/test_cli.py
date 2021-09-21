@@ -69,14 +69,14 @@ def test_add(runner, mock_device_connection):
     assert_account(expected_path, expected_hdpath=expected_hd_path)
 
 
-def test_add_hdpath_specified(runner, mock_ethereum_app, mock_device_connection, mock_account):
+def test_add_when_hd_path_specified(runner, mock_ethereum_app, mock_device_connection, mock_account):
     test_hd_path = "m/44'/60'/0'"
     mock_ethereum_app.hd_root_path = HDBasePath(test_hd_path)
 
     selected_account_id = 1
     result = runner.invoke(
         cli,
-        ["ledger", "add", TEST_ALIAS, "--hdpath", test_hd_path],
+        ["ledger", "add", TEST_ALIAS, "--hd-path", test_hd_path],
         input=str(selected_account_id),
     )
     assert result.exit_code == 0, result.output

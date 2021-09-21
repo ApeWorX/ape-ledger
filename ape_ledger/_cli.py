@@ -64,19 +64,20 @@ def _handle_hd_path(arg: str) -> Tuple[str, HDAccountPath]:
 @cli.command()
 @non_existing_alias_argument
 @click.option(
-    "--hdpath",
-    "account_choice",
+    "--hd-path",
     help=(
         f"The Ethereum account derivation path prefix. "
         f"Defaults to {HDBasePath.DEFAULT} where {{x}} is the account ID. "
         "Exclude {{x}} to append the account ID to the end of the base path."
     ),
-    callback=lambda ctx, param, arg: _handle_hd_path(arg),
+    callback=lambda ctx, param, arg: HDBasePath(arg),
 )
-def add(alias, account_choice):
+def add(alias, hd_path):
     """Add a account from your Ledger hardware wallet"""
 
-    address, account_hd_path = account_choice
+    app = connect_to_ethereum_app(hd_path)
+    choices = AddressPromptChoice(app)
+    address, account_hd_path = choices.get_user_selected_account()
     container = _get_container()
     container.save_account(alias, address, str(account_hd_path))
     notify("SUCCESS", f"Account '{address}' successfully added with alias '{alias}'.")
