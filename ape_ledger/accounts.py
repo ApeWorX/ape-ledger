@@ -8,6 +8,7 @@ from ape.types import AddressType, MessageSignature, TransactionSignature
 from eth_account.messages import SignableMessage
 
 from ape_ledger.client import EthereumAccountClient, connect_to_ethereum_account
+from exceptions import LedgerSigningError
 
 
 class AccountContainer(AccountContainerAPI):
@@ -71,10 +72,15 @@ class LedgerAccount(AccountAPI):
         return self._account_client
 
     def sign_message(self, msg: SignableMessage) -> Optional[MessageSignature]:
-        # TODO
-        #        if msg.version == ""
+        if msg.version == b"E":
+            vrs = self._client.sign_raw_message(str(msg.body))
+        elif msg.version == b"1":
+            vrs = self._client.sign_structured_message(str(msg.body))
+        else:
+            raise LedgerSigningError(
+                f"Unsupported message-signing specification, (version={msg.version})"
+            )
 
-        vrs = self._client.sign_message(text=str(msg.body))
         return MessageSignature(*vrs)  # type: ignore
 
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:

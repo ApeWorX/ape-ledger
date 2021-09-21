@@ -9,9 +9,10 @@ from typing import Dict, Optional, Tuple
 import hid  # type: ignore
 import rlp  # type: ignore
 from eth_account._utils.legacy_transactions import serializable_unsigned_transaction_from_dict
+from eth_account.messages import SignableMessage
 from eth_typing import HexStr, Primitives
-from eth_typing.evm import ChecksumAddress
-from eth_utils import to_bytes, to_checksum_address
+from eth_typing.evm import ChecksumAddress, Hash32
+from eth_utils import to_checksum_address
 
 from ape_ledger.exceptions import LedgerUsbException
 from ape_ledger.hdpath import HDAccountPath, HDBasePath
@@ -190,15 +191,12 @@ class LedgerUsbDeviceClient:
     This class is a APDU client for the Ledger device.
     It abstracts away communication with the device via it's
     :meth:`~ape_ledger.ledger.LedgerUsbDevice.exchange()` method.
+
+    References:
+    - https://github.com/ethereum/go-ethereum/blob/master/accounts/usbwallet/ledger.go
     """
 
     _exchange_timeout = 60
-
-    """
-    References:
-    - https://github.com/LedgerHQ/blue-loader-python/blob/master/ledgerblue/comm.py#L56
-    - https://github.com/ethereum/go-ethereum/blob/master/accounts/usbwallet/ledger.go
-    """
 
     def __init__(self, hid_device):
         self._device = hid_device
@@ -212,7 +210,9 @@ class LedgerUsbDeviceClient:
         return _handle_reply_status(reply)
 
     def exchange_in_chunks(self, payload: bytes, apdu_ins: int) -> Optional[bytes]:
-        """Split payload in chunks of 255 size"""
+        """
+        Split payload in chunks of 255 size and exchange them all.
+        """
         chunks = [payload[i : i + 255] for i in range(0, len(payload), 255)]
         apdu_param1 = _APDU.P1_FIRST
         reply = None
@@ -227,7 +227,7 @@ class LedgerUsbDeviceClient:
 
     def _receive_reply(self) -> bytes:
         """
-        Receive reply, size of reply is contained in first packet
+        Receive reply, size of reply is contained in first packet.
         """
         reply: bytes = b""
         reply_min_size = 2
@@ -298,23 +298,46 @@ class EthereumAccountClient:
     def path_bytes(self) -> bytes:
         return self._account_hd_path.as_bytes()
 
-    def sign_message(
-        self, primitive: Primitives = None, hex_str: HexStr = None, text: str = None
-    ) -> Optional[Tuple[int, int, int]]:
-        message_bytes = to_bytes(primitive, hexstr=hex_str, text=text)
+    def sign_raw_message(self, message: SignableMessage) -> Optional[Tuple[int, int, int]]:
+        """
+        Sign an Ethereum message only following the EIP 191 specification and using
+        your Ledger device. You will need to follow the prompts on the device
+        to validate the message data.
+        """
+
+        message_bytes = b'\x19' + version + signable_message.header + signable_message.body
+        return Hash32(keccak(joined))
+
+        message_bytes = text.encode("utf-8")
         message_with_prefix = struct.pack(">I", len(message_bytes)) + message_bytes
         payload = self.path_bytes + message_with_prefix
-        reply = self._exchange_chunks(payload, _APDU.INS_SIGN_PERSONAL_MESSAGE)
+        reply = self._exchange_in_chunks(payload, _APDU.INS_SIGN_PERSONAL_MESSAGE)
+        return _to_vrs(reply)
+
+    def sign_structured_message(self, text: str) -> Optional[Tuple[int, int, int]]:
+        """
+        Sign an Ethereum message following the EIP 712 specification.
+        """
+
+        message_bytes = text.encode("utf-8")
+        message_with_prefix = struct.pack(">I", len(message_bytes)) + message_bytes
+        payload = self.path_bytes + message_with_prefix
+        reply = self._exchange_in_chunks(payload, _APDU.INS_SIGN_PERSONAL_MESSAGE)
         return _to_vrs(reply)
 
     def sign_transaction(self, txn: Dict) -> Optional[Tuple[int, int, int]]:
+        """
+        Sign a transaction using your Ledger device. You will need to follow
+        the prompts on the device to validate the transaction data.
+        """
+
         unsigned_transaction = serializable_unsigned_transaction_from_dict(txn)
         rlp_encoded_tx = rlp.encode(unsigned_transaction)
         payload = self.path_bytes + rlp_encoded_tx
-        reply = self._exchange_chunks(payload, _APDU.INS_SIGN_TX)
+        reply = self._exchange_in_chunks(payload, _APDU.INS_SIGN_TX)
         return _to_vrs(reply)
 
-    def _exchange_chunks(self, payload: bytes, ins: int) -> bytes:
+    def _exchange_in_chunks(self, payload: bytes, ins: int) -> bytes:
         reply = self._client.exchange_in_chunks(payload, ins)
         if not reply:
             raise LedgerUsbException("Signing transaction failed - received 0 bytes in reply.")

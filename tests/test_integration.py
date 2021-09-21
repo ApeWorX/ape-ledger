@@ -69,7 +69,9 @@ def test_add(runner, mock_device_connection):
     assert_account(expected_path, expected_hdpath=expected_hd_path)
 
 
-def test_add_when_hd_path_specified(runner, mock_ethereum_app, mock_device_connection, mock_account):
+def test_add_when_hd_path_specified(
+    runner, mock_ethereum_app, mock_device_connection, mock_account
+):
     test_hd_path = "m/44'/60'/0'"
     mock_ethereum_app.hd_root_path = HDBasePath(test_hd_path)
 
