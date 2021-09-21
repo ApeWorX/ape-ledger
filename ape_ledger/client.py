@@ -10,8 +10,7 @@ import hid  # type: ignore
 import rlp  # type: ignore
 from eth_account._utils.legacy_transactions import serializable_unsigned_transaction_from_dict
 from eth_account.messages import SignableMessage
-from eth_typing import HexStr, Primitives
-from eth_typing.evm import ChecksumAddress, Hash32
+from eth_typing.evm import ChecksumAddress
 from eth_utils import to_checksum_address
 
 from ape_ledger.exceptions import LedgerUsbException
@@ -264,6 +263,11 @@ class LedgerUsbDeviceClient:
         time.sleep(0.01)
 
 
+def _encode_message(message: SignableMessage):
+    message_bytes = b"\x19" + message.version + message.header + message.body
+    return struct.pack(">I", len(message_bytes)) + message_bytes
+
+
 def _to_vrs(reply):
     v = reply[0]
     r = reply[1 : 1 + 32]
@@ -271,7 +275,7 @@ def _to_vrs(reply):
     return v, r, s
 
 
-class EthereumAccountClient:
+class LedgerEthereumAccountClient:
     """
     This class represents an account on the Ledger device when you know the full
     account HD path.
@@ -305,21 +309,17 @@ class EthereumAccountClient:
         to validate the message data.
         """
 
-        message_bytes = b'\x19' + version + signable_message.header + signable_message.body
-        return Hash32(keccak(joined))
-
-        message_bytes = text.encode("utf-8")
-        message_with_prefix = struct.pack(">I", len(message_bytes)) + message_bytes
-        payload = self.path_bytes + message_with_prefix
+        message_bytes = _encode_message(message)
+        payload = self.path_bytes + message_bytes
         reply = self._exchange_in_chunks(payload, _APDU.INS_SIGN_PERSONAL_MESSAGE)
         return _to_vrs(reply)
 
-    def sign_structured_message(self, text: str) -> Optional[Tuple[int, int, int]]:
+    def sign_structured_message(self, message: SignableMessage) -> Optional[Tuple[int, int, int]]:
         """
         Sign an Ethereum message following the EIP 712 specification.
         """
 
-        message_bytes = text.encode("utf-8")
+        message_bytes = _encode_message(message)
         message_with_prefix = struct.pack(">I", len(message_bytes)) + message_bytes
         payload = self.path_bytes + message_with_prefix
         reply = self._exchange_in_chunks(payload, _APDU.INS_SIGN_PERSONAL_MESSAGE)
@@ -354,25 +354,25 @@ class LedgerEthereumAppClient:
         self._client = client
         self.hd_root_path = hd_path
 
-    def load_account(self, account_id: int) -> EthereumAccountClient:
+    def load_account(self, account_id: int) -> LedgerEthereumAccountClient:
         account_hd_path = self.hd_root_path.get_account_path(account_id)
         command = _create_address_retrieval_command(account_hd_path)
         account_data = self._client.exchange(command)
         offset = 1 + account_data[0]
         address = account_data[offset + 1 : offset + 1 + account_data[offset]]
         address_checksum = to_checksum_address(address.decode())
-        return EthereumAccountClient(self._client, address_checksum, account_hd_path)
+        return LedgerEthereumAccountClient(self._client, address_checksum, account_hd_path)
 
 
 def connect_to_ethereum_account(
     address: ChecksumAddress, hd_account_path: HDAccountPath
-) -> EthereumAccountClient:
+) -> LedgerEthereumAccountClient:
     """
     Create an account client using an active device connection.
     """
 
     device = connect_to_device()
-    return EthereumAccountClient(device, address, hd_account_path)
+    return LedgerEthereumAccountClient(device, address, hd_account_path)
 
 
 def connect_to_ethereum_app(hd_path: HDBasePath) -> LedgerEthereumAppClient:
@@ -402,7 +402,7 @@ __all__ = [
     "connect_to_device",
     "connect_to_ethereum_account",
     "connect_to_ethereum_app",
-    "EthereumAccountClient",
+    "LedgerEthereumAccountClient",
     "LedgerEthereumAppClient",
     "LedgerUsbDeviceClient",
 ]

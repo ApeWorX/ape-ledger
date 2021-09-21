@@ -11,7 +11,7 @@ class TestHDPath:
         with pytest.raises(ValueError) as err:
             cls(path_without_m)
 
-        assert str(err.value) == "Derivation path must begin with m/"
+        assert str(err.value) == "HD path must begin with m/"
 
     @include_subclasses
     def test_account_path_trailing_slash_removes_trailing_slash(self, cls):
