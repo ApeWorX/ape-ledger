@@ -59,7 +59,13 @@ setup(
     author_email="admin@apeworx.io",
     url="https://github.com/ApeWorX/ape-ledger",
     include_package_data=True,
-    install_requires=["eth-ape==0.1.0a23", "hidapi==0.10.1", "click>=8.0.0", "rlp>=2.0.1"],
+    install_requires=[
+        "click>=8.0.0",
+        "hidapi==0.10.1",
+        "eth-ape==0.1.0a23",
+        "eth-account==0.5.5",
+        "rlp>=2.0.1",
+    ],
     entry_points={
         "ape_cli_subcommands": [
             "ape_ledger=ape_ledger._cli:cli",
