@@ -2,10 +2,16 @@ import struct
 
 
 class HDPath:
+    """
+    A class representing an HD path. This class is the base class
+    for both account specific HD paths (:class:`~ape_ledger.hdpath.HDAccountPath`)
+    as well as the derivation HD path class :class:`~ape_ledger.hdpath.HDBasePath`.
+    """
+
     def __init__(self, path):
         path = path.rstrip("/")
         if not path.startswith("m/"):
-            raise ValueError("Derivation path must begin with m/")
+            raise ValueError("HD path must begin with m/")
 
         self.path = path
 
@@ -14,6 +20,10 @@ class HDPath:
 
 
 class HDAccountPath(HDPath):
+    """
+    An HD path where the account node is set.
+    """
+
     def as_bytes(self):
         """
         Convert ``self.path`` to the Ledger bytes format.
@@ -41,6 +51,11 @@ class HDAccountPath(HDPath):
 
 
 class HDBasePath(HDPath):
+    """
+    A derivation HD path useful for creating objects of type
+    :class:`~ape_ledger.hdpath.HDAccountPath`.
+    """
+
     DEFAULT = "m/44'/60'/{x}'/0/0"
 
     def __init__(self, base_path=DEFAULT):
