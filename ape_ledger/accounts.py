@@ -36,6 +36,9 @@ class AccountContainer(AccountContainerAPI):
         pass
 
     def save_account(self, alias: str, address: str, hd_path: str):
+        """
+        Save a new Ledger account to your ape configuration.
+        """
         account_data = {"address": address, "hdpath": hd_path}
         path = self.data_folder.joinpath(f"{alias}.json")
         path.write_text(json.dumps(account_data))
