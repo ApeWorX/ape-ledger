@@ -64,6 +64,8 @@ setup(
         "hidapi==0.10.1",
         "eth-ape==0.1.0a23",
         "eth-account==0.5.5",
+        "eth-typing>=2.2.2",
+        "eth-utils>=1.10.0",
         "rlp>=2.0.1",
     ],
     entry_points={
