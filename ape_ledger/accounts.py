@@ -9,6 +9,7 @@ from eth_account.messages import SignableMessage
 
 from ape_ledger.client import LedgerEthereumAccountClient, connect_to_ethereum_account
 from ape_ledger.exceptions import LedgerSigningError
+from ape_ledger.hdpath import HDAccountPath
 
 
 class AccountContainer(AccountContainerAPI):
@@ -60,8 +61,9 @@ class LedgerAccount(AccountAPI):
         return to_address(self.account_file["address"])
 
     @property
-    def hdpath(self):
-        return self.account_file["hdpath"]
+    def hdpath(self) -> HDAccountPath:
+        raw_path = self.account_file["hdpath"]
+        return HDAccountPath(raw_path)
 
     @property
     def account_file(self) -> dict:
