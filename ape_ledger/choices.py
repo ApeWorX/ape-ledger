@@ -83,8 +83,7 @@ class AddressPromptChoice(PromptChoice):
 
     def get_user_selected_account(self) -> Tuple[str, HDAccountPath]:
         """Returns the selected address from the user along with the HD path.
-        The user is able to page through address using special characters
-        ``n`` and ``p`` before selecting.
+        The user is able to page using special characters ``n`` and ``p``.
         """
         address = None
         while address is None:
