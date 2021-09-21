@@ -68,7 +68,7 @@ def _handle_hd_path(arg: str) -> Tuple[str, HDAccountPath]:
     help=(
         f"The Ethereum account derivation path prefix. "
         f"Defaults to {HDBasePath.DEFAULT} where {{x}} is the account ID. "
-        "Exclude {{x}} to append the account ID to the end of the base path."
+        "Exclude {x} to append the account ID to the end of the base path."
     ),
     callback=lambda ctx, param, arg: HDBasePath(arg),
 )
