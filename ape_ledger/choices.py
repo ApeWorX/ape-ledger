@@ -60,7 +60,7 @@ class AddressPromptChoice(PromptChoice):
 
     @property
     def _is_incremented(self) -> bool:
-        """Returns ``True`` if the user has selected `n` at some point."""
+        """Returns ``True`` if the user has paged past the first page."""
         return (self._index_offset + self._page_size) > self._page_size
 
     @property
