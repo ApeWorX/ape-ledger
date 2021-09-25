@@ -39,14 +39,17 @@ class HDAccountPath(HDPath):
         """
         if len(self.path) == 0:
             return b""
+
         result = b""
         elements = self.path.split("/")[1:]
-        for pathElement in elements:
-            element = pathElement.split("'")
+
+        for path_element in elements:
+            element = path_element.split("'")
             if len(element) == 1:
                 result = result + struct.pack(">I", int(element[0]))
             else:
                 result = result + struct.pack(">I", 0x80000000 | int(element[0]))
+
         return result
 
 

@@ -114,7 +114,7 @@ class APDUBuilder:
         payload_length = len(payload)
         length = path_length + 1 + payload_length
         self.apdu += struct.pack(">BB", length, path_length // 4)
-        self.apdu += payload + payload
+        self.apdu += path + payload
 
 
 def _wrap_apdu(command: bytes) -> List[bytes]:
@@ -326,11 +326,7 @@ class LedgerEthereumAccountClient:
         encoded_message = struct.pack(">I", len(message_bytes))
         encoded_message += message_bytes
         builder = APDUBuilder(_Code.INS_SIGN_PERSONAL_MESSAGE)
-        path_length = len(self.path_bytes)
-        length = path_length + 1 + len(encoded_message)
-        builder.apdu += struct.pack(">BB", length, path_length // 4)
-        payload = self.path_bytes + encoded_message
-        builder.apdu += payload
+        builder.append(self.path_bytes, encoded_message)
         reply = self._client.exchange(builder.apdu)
         return _to_vrs(reply)
 
@@ -350,12 +346,8 @@ class LedgerEthereumAccountClient:
         """
 
         encoded_message = domain_hash + message_hash
-        message_length = len(encoded_message)
         builder = APDUBuilder(_Code.INS_SIGN_EIP_712)
-        path_length = len(self.path_bytes)
-        length = path_length + 1 + message_length
-        builder.apdu += struct.pack(">BB", length, path_length // 4)
-        builder.apdu += self.path_bytes + encoded_message
+        builder.append(self.path_bytes, encoded_message)
         reply = self._client.exchange(builder.apdu)
         return _to_vrs(reply)
 
@@ -377,10 +369,13 @@ class LedgerEthereumAccountClient:
         payload = self.path_bytes + rlp_encoded_tx
         chunks = [payload[i : i + 255] for i in range(0, len(payload), 255)]  # noqa: E203
         apdu_param1 = _Code.P1_FIRST
+        path_length = len(self.path_bytes)
         reply = None
         for chunk in chunks:
             builder = APDUBuilder(_Code.INS_SIGN_TX, p1=apdu_param1)
-            builder.append(self.path_bytes, chunk)
+            length = path_length + 1 + len(chunk)
+            builder.apdu += struct.pack(">BB", length, path_length // 4)
+            builder.apdu += chunk
             reply = self._client.exchange(builder.apdu)
             apdu_param1 = _Code.P1_MORE
 
