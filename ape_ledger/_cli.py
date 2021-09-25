@@ -141,11 +141,13 @@ def sign_message(alias, message):
     eip191message = encode_defunct(text=message)
     account = accounts.load(alias)
     signature = account.sign_message(eip191message)
-    signature_bytes = signature.encode_vrs().hex()
+    signature_bytes = signature.encode_rsv()
 
     # Verify signature
     signer = Account.recover_message(eip191message, signature=signature_bytes)
     if signer != account.address:
         raise Abort(f"Signer resolves incorrectly, got {signer}, expected {account.address}.")
 
-    click.echo(signature_bytes)
+    # Message signed successfully
+    output_signature = signature.encode_vrs().hex()
+    click.echo(output_signature)
