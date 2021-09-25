@@ -36,7 +36,8 @@ def mock_device_connection(mocker, mock_ethereum_app):
 @pytest.fixture
 def existing_account(runner):
     try:
-        _get_container().save_account(TEST_ALIAS, TEST_ADDRESS, TEST_HD_PATH)
+        container = _get_container()
+        container.save_account(TEST_ALIAS, TEST_ADDRESS, TEST_HD_PATH)
         yield
     finally:
         _clean_up(runner)

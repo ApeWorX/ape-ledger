@@ -49,7 +49,14 @@ class AccountContainer(AccountContainerAPI):
 
     def delete_account(self, alias: str):
         path = self.data_folder.joinpath(f"{alias}.json")
-        path.unlink(missing_ok=True)
+
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            # It is ok file is missing.
+            # NOTE: we are unable to use ``missing_ok`` parameter in `unlink()`
+            # because of python 3.7 compatibility
+            return
 
 
 class LedgerAccount(AccountAPI):
