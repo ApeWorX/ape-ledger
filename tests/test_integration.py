@@ -123,9 +123,3 @@ def test_delete_account_not_exists(runner):
     result = runner.invoke(cli, ["ledger", "delete", TEST_ALIAS])
     assert result.exit_code == 1
     assert f"ERROR: The account with alias '{TEST_ALIAS}' does not exist" in result.output
-
-
-def test_delete_all(runner, existing_account):
-    result = runner.invoke(cli, ["ledger", "delete-all"], input="y")
-    assert result.exit_code == 0, result.output
-    assert f"SUCCESS: Account '{TEST_ALIAS}' has been removed" in result.output
