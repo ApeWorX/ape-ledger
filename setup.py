@@ -7,6 +7,8 @@ extras_require = {
         "pytest>=6.0,<7.0",  # Core testing package
         "pytest-xdist",  # multi-process runner
         "pytest-cov",  # Coverage analyzer plugin
+        "pytest-mock",  # For creating mocks
+        "eip712",
         "hypothesis>=6.2.0,<7.0",  # Strategy-based fuzzer
     ],
     "lint": [
@@ -53,9 +55,22 @@ setup(
     url="https://github.com/ApeWorX/ape-ledger",
     include_package_data=True,
     install_requires=[
-        "importlib-metadata ; python_version<'3.8'",
-    ],  # NOTE: Add 3rd party libraries here
-    python_requires=">=3.6,<4",
+        "click>=8.0.0",
+        "hidapi==0.10.1",
+        "eth-ape==0.1.0a23",
+        "eth-account==0.5.5",
+        "eth-typing>=2.2.2",
+        "eth-utils>=1.10.0",
+        "hexbytes==0.2.2",
+        "importlib-metadata",
+        "rlp>=2.0.1",
+    ],
+    entry_points={
+        "ape_cli_subcommands": [
+            "ape_ledger=ape_ledger._cli:cli",
+        ],
+    },
+    python_requires=">=3.7,<4",
     extras_require=extras_require,
     py_modules=["ape_ledger"],
     license="Apache-2.0",
