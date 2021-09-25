@@ -396,9 +396,8 @@ class LedgerEthereumAppClient:
 
     def load_account(self, account_id: int) -> LedgerEthereumAccountClient:
         path_bytes = self.hd_root_path.get_account_path(account_id).as_bytes()
-        path_length = len(path_bytes)
         builder = APDUBuilder(_Code.INS_GET_PUBLIC_KEY, p1=_Code.P1_NON_CONFIRM)
-        builder.apdu += chr(path_length + 1).encode() + chr(path_length // 4).encode() + path_bytes
+        builder.append(path_bytes, b"")
         account_data = self._client.exchange(builder.apdu)
         offset = 1 + account_data[0]
         address = account_data[offset + 1 : offset + 1 + account_data[offset]]
