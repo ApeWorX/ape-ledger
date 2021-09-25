@@ -22,7 +22,7 @@ def cli():
     """
 
 
-yes_option = click.option(
+skip_confirmation_option = click.option(
     "-y",
     "--yes",
     "skip_confirmation",
@@ -110,7 +110,7 @@ def delete(alias):
 
 
 @cli.command()
-@yes_option
+@skip_confirmation_option
 def delete_all(skip_confirmation):
     """Remove all Ledger accounts from your ape configuration"""
 
