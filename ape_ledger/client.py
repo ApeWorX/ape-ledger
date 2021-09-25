@@ -109,15 +109,12 @@ class APDUBuilder:
     def __init__(self, ins: int, p1: int = _Code.P1_FIRST, p2: int = _Code.P2_NO_CHAINCODE):
         self.apdu = struct.pack(">BBBB", _Code.CLA, ins, p1, p2)
 
-    def pack_payload(self, payload: bytes):
-        self.apdu += struct.pack(">B", len(payload))
-        self.apdu += payload
-
-
-def _pack_payload(apdu, payload):
-    apdu += struct.pack(">B", len(payload))
-    apdu += payload
-    return apdu
+    def append(self, path: bytes, payload: bytes):
+        path_length = len(path)
+        payload_length = len(payload)
+        length = path_length + 1 + payload_length
+        self.apdu += struct.pack(">BB", length, path_length // 4)
+        self.apdu += payload + payload
 
 
 def _wrap_apdu(command: bytes) -> List[bytes]:
@@ -227,21 +224,6 @@ class LedgerUsbDeviceClient:
         reply = self._receive_reply()
         return _handle_reply_status(reply)
 
-    def exchange_in_chunks(self, payload: bytes, apdu_ins: int) -> Optional[bytes]:
-        """
-        Split payload in chunks of 255 size and exchange them all.
-        """
-        chunks = [payload[i : i + 255] for i in range(0, len(payload), 255)]  # noqa: E203
-        apdu_param1 = _Code.P1_FIRST
-        reply = None
-        for chunk in chunks:
-            builder = APDUBuilder(apdu_ins, p1=apdu_param1)
-            builder.pack_payload(chunk)
-            reply = self.exchange(builder.apdu)
-            apdu_param1 = _Code.P1_MORE
-
-        return reply or None
-
     def _receive_reply(self) -> bytes:
         """
         Receive reply, size of reply is contained in first packet.
@@ -310,6 +292,7 @@ class LedgerEthereumAccountClient:
         self._client = client
         self._address = address
         self._account_hd_path = account_hd_path
+        self._path_bytes = b""  # cached calculation
 
     def __str__(self):
         return self._address
@@ -320,22 +303,33 @@ class LedgerEthereumAccountClient:
 
     @property
     def path_bytes(self) -> bytes:
-        return self._account_hd_path.as_bytes()
+        if self._path_bytes == b"":
+            self._path_bytes = self._account_hd_path.as_bytes()
+
+        return self._path_bytes
 
     def sign_personal_message(self, message_bytes: bytes) -> Optional[Tuple[int, bytes, bytes]]:
         """
         Sign an Ethereum message only following the EIP 191 specification and using
         your Ledger device. You will need to follow the prompts on the device
         to validate the message data.
+
+        APDU breakdown:
+          Number of BIP 32 derivations to perform (max 10) - 1 byte
+          First derivation index (big endian)              - 4 bytes
+          ...                                              - 4 bytes
+          Last derivation index (big endian)               - 4 bytes
+          Message length                                   - 4 bytes
+          Message chunk                                    - variable
         """
 
         encoded_message = struct.pack(">I", len(message_bytes))
         encoded_message += message_bytes
-        dongle_path = self.path_bytes
         builder = APDUBuilder(_Code.INS_SIGN_PERSONAL_MESSAGE)
-        length = len(dongle_path) + 1 + len(encoded_message)
-        builder.apdu += struct.pack(">BB", length, len(dongle_path) // 4)
-        payload = dongle_path + encoded_message
+        path_length = len(self.path_bytes)
+        length = path_length + 1 + len(encoded_message)
+        builder.apdu += struct.pack(">BB", length, path_length // 4)
+        payload = self.path_bytes + encoded_message
         builder.apdu += payload
         reply = self._client.exchange(builder.apdu)
         return _to_vrs(reply)
@@ -354,12 +348,14 @@ class LedgerEthereumAccountClient:
           domain hash                                      - 32 bytes
           message hash                                     - 32 bytes
         """
-        message_bytes = domain_hash + message_hash
-        message_bytes = struct.pack(">I", len(message_bytes)) + message_bytes
-        payload = self.path_bytes + message_bytes
 
+        encoded_message = domain_hash + message_hash
+        message_length = len(encoded_message)
         builder = APDUBuilder(_Code.INS_SIGN_EIP_712)
-        builder.pack_payload(payload)
+        path_length = len(self.path_bytes)
+        length = path_length + 1 + message_length
+        builder.apdu += struct.pack(">BB", length, path_length // 4)
+        builder.apdu += self.path_bytes + encoded_message
         reply = self._client.exchange(builder.apdu)
         return _to_vrs(reply)
 
@@ -379,15 +375,19 @@ class LedgerEthereumAccountClient:
         unsigned_transaction = serializable_unsigned_transaction_from_dict(txn)
         rlp_encoded_tx = rlp.encode(unsigned_transaction)
         payload = self.path_bytes + rlp_encoded_tx
-        reply = self._exchange_in_chunks(payload, _Code.INS_SIGN_TX)
-        return _to_vrs(reply)
+        chunks = [payload[i : i + 255] for i in range(0, len(payload), 255)]  # noqa: E203
+        apdu_param1 = _Code.P1_FIRST
+        reply = None
+        for chunk in chunks:
+            builder = APDUBuilder(_Code.INS_SIGN_TX, p1=apdu_param1)
+            builder.append(self.path_bytes, chunk)
+            reply = self._client.exchange(builder.apdu)
+            apdu_param1 = _Code.P1_MORE
 
-    def _exchange_in_chunks(self, payload: bytes, ins: int) -> bytes:
-        reply = self._client.exchange_in_chunks(payload, ins)
         if not reply:
             raise LedgerUsbError("Signing transaction failed - received 0 bytes in reply.")
 
-        return reply
+        return _to_vrs(reply)
 
 
 class LedgerEthereumAppClient:
@@ -400,14 +400,15 @@ class LedgerEthereumAppClient:
         self.hd_root_path = hd_path
 
     def load_account(self, account_id: int) -> LedgerEthereumAccountClient:
-        account_hd_path = self.hd_root_path.get_account_path(account_id).as_bytes()
+        path_bytes = self.hd_root_path.get_account_path(account_id).as_bytes()
+        path_length = len(path_bytes)
         builder = APDUBuilder(_Code.INS_GET_PUBLIC_KEY, p1=_Code.P1_NON_CONFIRM)
-        builder.pack_payload(account_hd_path)
+        builder.apdu += chr(path_length + 1).encode() + chr(path_length // 4).encode() + path_bytes
         account_data = self._client.exchange(builder.apdu)
         offset = 1 + account_data[0]
         address = account_data[offset + 1 : offset + 1 + account_data[offset]]
         address_checksum = to_checksum_address(address.decode())
-        return LedgerEthereumAccountClient(self._client, address_checksum, account_hd_path)
+        return LedgerEthereumAccountClient(self._client, address_checksum, path_bytes)
 
 
 def connect_to_ethereum_account(
