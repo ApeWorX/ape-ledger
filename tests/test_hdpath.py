@@ -50,5 +50,5 @@ class TestHDAccountPath:
     def test_as_bytes(self):
         path = HDAccountPath("m/44'/60'/2'/0/0")
         actual = path.as_bytes()
-        expected = b"\x80\x00\x00,\x80\x00\x00<\x80\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00"
+        expected = b"\x05\x80\x00\x00,\x80\x00\x00<\x80\x00\x00\x02\x00\x00\x00\x00\x00\x00\x00\x00"
         assert actual == expected
