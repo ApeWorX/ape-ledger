@@ -37,18 +37,23 @@ class HDAccountPath(HDPath):
         - https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
         - https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
         """
-        if len(self.path) == 0:
-            return b""
-
-        result = b""
         elements = self.path.split("/")[1:]
+        depth = len(elements)
 
-        for path_element in elements:
-            element = path_element.split("'")
-            if len(element) == 1:
-                result = result + struct.pack(">I", int(element[0]))
-            else:
-                result = result + struct.pack(">I", 0x80000000 | int(element[0]))
+        # Number of BIP 32 derivations to perform (max 10)
+        result = bytes([depth])
+
+        for derivation_index in elements:
+            # For each derivation index in the path check if it is hardened
+            hardened = "'" in derivation_index
+            index = int(derivation_index.strip("'"))
+
+            if hardened:
+                # See bip32 spec for hardened derivation spec
+                index = 0x80000000 | index
+
+            # Append index to result as a big-endian (>) unsigned int (I)
+            result += struct.pack(">I", index)
 
         return result
 

@@ -110,10 +110,8 @@ class APDUBuilder:
         self.apdu = struct.pack(">BBBB", _Code.CLA, ins, p1, p2)
 
     def append(self, path: bytes, payload: bytes):
-        path_length = len(path)
-        payload_length = len(payload)
-        length = path_length + 1 + payload_length
-        self.apdu += struct.pack(">BB", length, path_length // 4)
+        length = len(payload) + len(path)
+        self.apdu += struct.pack(">B", length)
         self.apdu += path + payload
 
 
@@ -369,13 +367,11 @@ class LedgerEthereumAccountClient:
         payload = self.path_bytes + rlp_encoded_tx
         chunks = [payload[i : i + 255] for i in range(0, len(payload), 255)]  # noqa: E203
         apdu_param1 = _Code.P1_FIRST
-        path_length = len(self.path_bytes)
         reply = None
+
         for chunk in chunks:
             builder = APDUBuilder(_Code.INS_SIGN_TX, p1=apdu_param1)
-            length = path_length + 1 + len(chunk)
-            builder.apdu += struct.pack(">BB", length, path_length // 4)
-            builder.apdu += chunk
+            builder.append(b"", chunk)
             reply = self._client.exchange(builder.apdu)
             apdu_param1 = _Code.P1_MORE
 
