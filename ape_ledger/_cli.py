@@ -2,15 +2,18 @@ from typing import List
 
 import click
 from ape import accounts
-from ape.exceptions import AliasAlreadyInUseError
-from ape.utils import Abort, notify
+from ape.cli import (
+    ape_cli_context,
+    existing_alias_argument,
+    non_existing_alias_argument,
+    skip_confirmation_option,
+)
 from eth_account import Account
 from eth_account.messages import encode_defunct
 
 from ape_ledger.accounts import LedgerAccount
 from ape_ledger.choices import AddressPromptChoice
 from ape_ledger.client import connect_to_ethereum_app
-from ape_ledger.exceptions import AliasNotExistsError
 from ape_ledger.hdpath import HDBasePath
 
 
@@ -22,44 +25,15 @@ def cli():
     """
 
 
-skip_confirmation_option = click.option(
-    "-y",
-    "--yes",
-    "skip_confirmation",
-    default=False,
-    is_flag=True,
-    help="Don't ask for confirmation when removing the account",
-)
-
-
-def _require_non_existing_alias(arg):
-    if arg in accounts.aliases:
-        raise AliasAlreadyInUseError(arg)
-    return arg
-
-
-def _require_existing_alias(arg):
-    if arg not in accounts.aliases:
-        raise AliasNotExistsError(arg)
-    return arg
-
-
-existing_alias_argument = click.argument(
-    "alias", callback=lambda ctx, param, arg: _require_existing_alias(arg)
-)
-non_existing_alias_argument = click.argument(
-    "alias", callback=lambda ctx, param, arg: _require_non_existing_alias(arg)
-)
-
-
 @cli.command("list")
-def _list():
+@ape_cli_context()
+def _list(cli_ctx):
     """List the Ledger accounts in your ape configuration"""
 
     ledger_accounts = _get_ledger_accounts()
 
     if len(ledger_accounts) == 0:
-        notify("WARNING", "No accounts found.")
+        cli_ctx.logger.warning("No accounts found.")
         return
 
     num_accounts = len(accounts)
@@ -78,6 +52,7 @@ def _get_ledger_accounts() -> List[LedgerAccount]:
 
 
 @cli.command()
+@ape_cli_context()
 @non_existing_alias_argument
 @click.option(
     "--hd-path",
@@ -88,7 +63,7 @@ def _get_ledger_accounts() -> List[LedgerAccount]:
     ),
     callback=lambda ctx, param, arg: HDBasePath(arg),
 )
-def add(alias, hd_path):
+def add(cli_ctx, alias, hd_path):
     """Add a account from your Ledger hardware wallet"""
 
     app = connect_to_ethereum_app(hd_path)
@@ -96,47 +71,49 @@ def add(alias, hd_path):
     address, account_hd_path = choices.get_user_selected_account()
     container = accounts.containers.get("ledger")
     container.save_account(alias, address, str(account_hd_path))
-    notify("SUCCESS", f"Account '{address}' successfully added with alias '{alias}'.")
+    cli_ctx.logger.success(f"Account '{address}' successfully added with alias '{alias}'.")
 
 
 @cli.command()
-@existing_alias_argument
-def delete(alias):
+@ape_cli_context()
+@existing_alias_argument(account_type=LedgerAccount)
+def delete(cli_ctx, alias):
     """Remove a Ledger account from your ape configuration"""
 
     container = accounts.containers.get("ledger")
     container.delete_account(alias)
-    notify("SUCCESS", f"Account '{alias}' has been removed")
+    cli_ctx.logger.success(f"Account '{alias}' has been removed")
 
 
 @cli.command()
-@skip_confirmation_option
-def delete_all(skip_confirmation):
+@ape_cli_context()
+@skip_confirmation_option("Don't ask for confirmation when removing all accounts")
+def delete_all(cli_ctx, skip_confirmation):
     """Remove all Ledger accounts from your ape configuration"""
 
     container = accounts.containers.get("ledger")
     ledger_accounts = _get_ledger_accounts()
     if len(ledger_accounts) == 0:
-        notify("WARNING", "No accounts found.")
+        cli_ctx.logger.warning("No accounts found.")
         return
 
     user_agrees = skip_confirmation or click.confirm("Remove all Ledger accounts from ape?")
     if not user_agrees:
-        notify("INFO", "No account were removed.")
+        cli_ctx.logger.info("No account were removed.")
         return
 
     for account in ledger_accounts:
         container.delete_account(account.alias)
-        notify("SUCCESS", f"Account '{account.alias}' has been removed")
+        cli_ctx.logger.success(f"Account '{account.alias}' has been removed")
 
 
 @cli.command(short_help="Sign a message with your Ledger device")
+@ape_cli_context()
 @click.argument("alias")
 @click.argument("message", default="Hello World!")
-def sign_message(alias, message):
+def sign_message(cli_ctx, alias, message):
     if alias not in accounts.aliases:
-        notify("ERROR", f"Account with alias '{alias}' does not exist")
-        return
+        cli_ctx.abort(f"Account with alias '{alias}' does not exist")
 
     eip191message = encode_defunct(text=message)
     account = accounts.load(alias)
@@ -146,7 +123,7 @@ def sign_message(alias, message):
     # Verify signature
     signer = Account.recover_message(eip191message, signature=signature_bytes)
     if signer != account.address:
-        raise Abort(f"Signer resolves incorrectly, got {signer}, expected {account.address}.")
+        cli_ctx.abort(f"Signer resolves incorrectly, got {signer}, expected {account.address}.")
 
     # Message signed successfully
     output_signature = signature.encode_vrs().hex()
