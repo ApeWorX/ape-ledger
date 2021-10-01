@@ -14,15 +14,6 @@ class LedgerSigningError(LedgerAccountException):
     """
 
 
-class AliasNotExistsError(LedgerAccountException):
-    """
-    An error raised when an account with the given alias does not exist.
-    """
-
-    def __init__(self, alias):
-        super().__init__(f"The account with alias '{alias}' does not exist")
-
-
 class LedgerUsbError(LedgerAccountException):
     def __init__(self, message, status=0):
         self.status = status

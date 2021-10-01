@@ -57,7 +57,7 @@ setup(
     install_requires=[
         "click>=8.0.0",
         "hidapi==0.10.1",
-        "eth-ape==0.1.0a23",
+        "eth-ape>=0.1.0a24",
         "eth-account==0.5.5",
         "eth-typing>=2.2.2",
         "eth-utils>=1.10.0",

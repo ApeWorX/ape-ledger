@@ -1,39 +1,11 @@
 from typing import Any, Optional, Tuple
 
 import click
+from ape.cli import PromptChoice
 from click import Context, Parameter
 
 from ape_ledger.client import LedgerEthereumAppClient
 from ape_ledger.hdpath import HDAccountPath, HDBasePath
-
-
-class PromptChoice(click.ParamType):
-    """
-    A choice option or argument from user selection.
-    """
-
-    def __init__(self, choices):
-        self.choices = choices
-        self.choice_index = None
-
-    def print_choices(self):
-        choices = dict(enumerate(self.choices, 1))
-        for choice in choices:
-            click.echo(f"{choice}. {choices[choice]}")
-        click.echo()
-
-    def convert(
-        self, value: Any, param: Optional["Parameter"], ctx: Optional["Context"]
-    ) -> Optional[str]:
-        try:
-            self.choice_index = int(value) - 1
-            if self.choice_index < 0:
-                self.fail("Invalid choice", param=param)
-
-            choice = self.choices[self.choice_index]
-            return choice
-        except Exception:
-            self.fail("Invalid choice", param=param)
 
 
 class AddressPromptChoice(PromptChoice):
