@@ -24,6 +24,7 @@ class AddressPromptChoice(PromptChoice):
         self._app = app
         self._index_offset = index_offset
         self._page_size = page_size
+        self._choice_index = None
 
         # Must call ``_load_choices()`` to set address choices
         super().__init__([])
@@ -54,7 +55,9 @@ class AddressPromptChoice(PromptChoice):
             # Don't select an address yet if user paged.
             return None
 
-        return super().convert(value, param, ctx)
+        address = super().convert(value, param, ctx)
+        self._choice_index = self.choices.index(address)
+        return address
 
     def get_user_selected_account(self) -> Tuple[str, HDAccountPath]:
         """Returns the selected address from the user along with the HD path.
@@ -67,7 +70,7 @@ class AddressPromptChoice(PromptChoice):
 
             address = self._get_user_selection()
 
-        account_id = self.choice_index
+        account_id = self._choice_index
         return address, self._hd_root_path.get_account_path(account_id)
 
     def _get_user_selection(self) -> str:

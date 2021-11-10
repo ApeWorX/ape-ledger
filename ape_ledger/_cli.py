@@ -53,7 +53,7 @@ def _get_ledger_accounts() -> List[LedgerAccount]:
 
 @cli.command()
 @ape_cli_context()
-@non_existing_alias_argument
+@non_existing_alias_argument()
 @click.option(
     "--hd-path",
     help=(
