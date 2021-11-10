@@ -68,17 +68,17 @@ def test_list(runner, existing_account):
 
 
 def test_add(runner, mock_device_connection):
-    selected_account_id = 1
+    selected_account_id = 0
     result = runner.invoke(cli, ["ledger", "add", TEST_ALIAS], input=str(selected_account_id))
     assert result.exit_code == 0, result.output
     assert (
-        f"SUCCESS: Account '{TEST_ADDRESS}' successfully added with alias '{TEST_ALIAS}'"
+        f"SUCCESS: Account '{TEST_ADDRESS}' successfully added with alias '{TEST_ALIAS}'."
         in result.output
     )
 
     container = _get_container()
     expected_path = container.data_folder.joinpath(f"{TEST_ALIAS}.json")
-    expected_hd_path = f"m/44'/60'/{selected_account_id - 1}'/0/0"
+    expected_hd_path = f"m/44'/60'/{selected_account_id}'/0/0"
     assert_account(expected_path, expected_hdpath=expected_hd_path)
 
 
@@ -88,7 +88,7 @@ def test_add_when_hd_path_specified(
     test_hd_path = "m/44'/60'/0'"
     mock_ethereum_app.hd_root_path = HDBasePath(test_hd_path)
 
-    selected_account_id = 1
+    selected_account_id = 0
     result = runner.invoke(
         cli,
         ["ledger", "add", TEST_ALIAS, "--hd-path", test_hd_path],
@@ -96,21 +96,24 @@ def test_add_when_hd_path_specified(
     )
     assert result.exit_code == 0, result.output
     assert (
-        f"SUCCESS: Account '{TEST_ADDRESS}' successfully added with alias '{TEST_ALIAS}'"
+        f"SUCCESS: Account '{TEST_ADDRESS}' successfully added with alias '{TEST_ALIAS}'."
         in result.output
     )
 
     expected_path = TEST_ACCOUNT_PATH
-    expected_hd_path = f"m/44'/60'/0'/{selected_account_id - 1}"
+    expected_hd_path = f"m/44'/60'/0'/{selected_account_id}"
     assert_account(expected_path, expected_hdpath=expected_hd_path)
 
 
 def test_add_alias_already_exists(
     runner, mock_ethereum_app, mock_device_connection, existing_account
 ):
-    result = runner.invoke(cli, ["ledger", "add", TEST_ALIAS], input="1")
-    assert result.exit_code == 1
-    assert f"ERROR: Account with alias '{TEST_ALIAS}' already in use" in result.output
+    result = runner.invoke(cli, ["ledger", "add", TEST_ALIAS], input="0")
+    assert result.exit_code == 1, result.output
+    assert (
+        f"ERROR: (AliasAlreadyInUseError) Account with alias '{TEST_ALIAS}' already in use."
+        in result.output
+    )
 
 
 def test_delete(runner, existing_account):

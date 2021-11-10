@@ -46,11 +46,16 @@ def account_connection(mocker, ledger_account):
     return patch
 
 
+@pytest.fixture
+def mock_config_manager(mocker):
+    return mocker.MagicMock()
+
+
 class TestAccountContainer:
-    def test_save_account(self, runner, mock_container):
+    def test_save_account(self, runner, mock_container, mock_config_manager):
         with runner.isolated_filesystem():
             # noinspection PyArgumentList
-            container = AccountContainer(Path("."), LedgerAccount)
+            container = AccountContainer(Path("."), LedgerAccount, mock_config_manager)
             container.save_account(TEST_ALIAS, TEST_ADDRESS, TEST_HD_PATH)
 
             assert_account(f"{TEST_ALIAS}.json", expected_hdpath=TEST_HD_PATH)
@@ -121,5 +126,7 @@ class TestLedgerAccount:
                 account.sign_message(message)
 
             actual = str(err.value)
-            expected = f"Unsupported message-signing specification, (version={unsupported_version})"
+            expected = (
+                f"Unsupported message-signing specification, (version={unsupported_version})."
+            )
             assert actual == expected

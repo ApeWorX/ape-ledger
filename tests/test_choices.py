@@ -7,7 +7,7 @@ class TestAddressPromptChoice:
     def test_get_user_selected_account(self, mocker, mock_ethereum_app):
         mock_prompt = mocker.patch("ape_ledger.choices.click.prompt")
         choices = AddressPromptChoice(mock_ethereum_app)
-        choices.choice_index = 1
+        choices._choice_index = 1
 
         # `None` means the user hasn't selected yeet
         # And is entering other keys, possible the paging keys.
