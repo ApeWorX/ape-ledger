@@ -58,7 +58,7 @@ setup(
         "click>=8.0.0",
         "hidapi==0.10.1",
         "eth-ape>=0.1.0a26",
-        "eth-account==0.5.5",
+        "eth-account>=0.5.6,<0.6.0",
         "eth-typing>=2.2.2",
         "eth-utils>=1.10.0",
         "hexbytes==0.2.2",
