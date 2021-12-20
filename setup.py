@@ -57,7 +57,7 @@ setup(
     install_requires=[
         "click>=8.0.0",
         "hidapi==0.10.1",
-        "eth-ape>=0.1.0a24",
+        "eth-ape>=0.1.0b1",
         "eth-account>=0.5.6,<0.6.0",
         "eth-typing>=2.2.2",
         "eth-utils>=1.10.0",
@@ -79,7 +79,7 @@ setup(
     packages=find_packages(exclude=["tests", "tests.*"]),
     package_data={"ape_ledger": ["py.typed"]},
     classifiers=[
-        "Development Status :: 3 - Beta",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
         "Natural Language :: English",
