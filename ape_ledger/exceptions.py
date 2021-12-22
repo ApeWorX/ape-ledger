@@ -15,7 +15,7 @@ class LedgerSigningError(LedgerAccountException):
 
 
 class LedgerUsbError(LedgerAccountException):
-    def __init__(self, message, status=0):
+    def __init__(self, message: str, status: int = 0):
         self.status = status
         super().__init__(message)
 
@@ -25,9 +25,9 @@ class LedgerTimeoutError(LedgerUsbError):
     Raised when the Ledger client times-out waiting for a response from the device.
     """
 
-    def __init__(self, timeout):
+    def __init__(self, timeout: int):
         message = (
             f"Timeout waiting device response (timeout={timeout}).\n"
-            f"Make sure the Ledger device is not busy with another task."
+            "Make sure the Ledger device is not busy with another task."
         )
         super().__init__(message)

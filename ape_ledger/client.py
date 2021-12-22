@@ -267,7 +267,7 @@ def _to_vrs(reply: bytes) -> Tuple[int, bytes, bytes]:
     where `v` is 1 byte, `r` is 32 bytes, and `s` is 32 bytes.
     """
     if not reply:
-        raise LedgerUsbError("No data in reply")
+        raise LedgerUsbError("No data in reply.")
 
     v = reply[0]  # 1 byte
     r = reply[1:33]  # 32 bytes
@@ -429,7 +429,7 @@ def connect_to_device() -> LedgerUsbDeviceClient:
 
     hid_path = _get_hid_device_path()
     if hid_path is None:
-        raise LedgerUsbError("No Ledger USB device found")
+        raise LedgerUsbError("No Ledger USB device found.")
 
     device = _get_device(hid_path)
     return LedgerUsbDeviceClient(device)
