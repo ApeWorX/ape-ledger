@@ -132,24 +132,16 @@ def sign_message(cli_ctx, alias, message):
 
 @cli.command(short_help="Verify a message with your Trezor device")
 @click.argument("message")
-@click.argument("signature")
 def verify_message(message, signature):
 
     eip191message = encode_defunct(text=message)
 
     try:
-        signer = Account.recover_message(eip191message, signature=signature)
+        signer_address = Account.recover_message(eip191message, signature=signature)
     except ValueError as exc:
         message = "Message cannot be verified. Check the signature and try again."
         raise LedgerSigningError(message) from exc
 
-    try:
-        alias = accounts[signer].alias
-    except IndexError:
-        alias = None
+    alias = accounts[signer_address].alias if signer_address in accounts else ""
 
-    output = "Signer: "
-    output += f"({alias}) " if alias else ""
-    output += f"{signer}"
-
-    click.echo(output)
+    click.echo(f"Signer: {signer_address}  {alias}")
