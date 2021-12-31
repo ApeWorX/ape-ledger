@@ -58,7 +58,7 @@ def _get_ledger_accounts() -> List[LedgerAccount]:
     "--hd-path",
     help=(
         "The Ethereum account derivation path prefix. "
-        f"Defaults to {HDBasePath.DEFAULT} where {{x}} is the account ID. "
+        "Defaults to m/44'/60'/{x}'/0/0 where {{x}} is the account ID. "
         "Exclude {x} to append the account ID to the end of the base path."
     ),
     callback=lambda ctx, param, arg: HDBasePath(arg),
