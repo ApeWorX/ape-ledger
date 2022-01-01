@@ -1,6 +1,5 @@
-from conftest import TEST_ADDRESS
-
 from ape_ledger.choices import AddressPromptChoice
+from conftest import TEST_ADDRESS
 
 
 class TestAddressPromptChoice:

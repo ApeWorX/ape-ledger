@@ -14,6 +14,7 @@ from eth_account.messages import encode_defunct
 from ape_ledger.accounts import LedgerAccount
 from ape_ledger.choices import AddressPromptChoice
 from ape_ledger.client import connect_to_ethereum_app
+from ape_ledger.exceptions import LedgerSigningError
 from ape_ledger.hdpath import HDBasePath
 
 
@@ -21,7 +22,6 @@ from ape_ledger.hdpath import HDBasePath
 def cli():
     """
     Command-line helper for managing Ledger hardware device accounts.
-    You can add accounts using the `add` command.
     """
 
 
@@ -57,8 +57,8 @@ def _get_ledger_accounts() -> List[LedgerAccount]:
 @click.option(
     "--hd-path",
     help=(
-        f"The Ethereum account derivation path prefix. "
-        f"Defaults to {HDBasePath.DEFAULT} where {{x}} is the account ID. "
+        "The Ethereum account derivation path prefix. "
+        "Defaults to m/44'/60'/{x}'/0/0 where {{x}} is the account ID. "
         "Exclude {x} to append the account ID to the end of the base path."
     ),
     callback=lambda ctx, param, arg: HDBasePath(arg),
@@ -82,7 +82,7 @@ def delete(cli_ctx, alias):
 
     container = accounts.containers.get("ledger")
     container.delete_account(alias)
-    cli_ctx.logger.success(f"Account '{alias}' has been removed")
+    cli_ctx.logger.success(f"Account '{alias}' has been removed.")
 
 
 @cli.command()
@@ -104,7 +104,7 @@ def delete_all(cli_ctx, skip_confirmation):
 
     for account in ledger_accounts:
         container.delete_account(account.alias)
-        cli_ctx.logger.success(f"Account '{account.alias}' has been removed")
+        cli_ctx.logger.success(f"Account '{account.alias}' has been removed.")
 
 
 @cli.command(short_help="Sign a message with your Ledger device")
@@ -112,8 +112,9 @@ def delete_all(cli_ctx, skip_confirmation):
 @click.argument("alias")
 @click.argument("message", default="Hello World!")
 def sign_message(cli_ctx, alias, message):
+
     if alias not in accounts.aliases:
-        cli_ctx.abort(f"Account with alias '{alias}' does not exist")
+        cli_ctx.abort(f"Account with alias '{alias}' does not exist.")
 
     eip191message = encode_defunct(text=message)
     account = accounts.load(alias)
@@ -125,6 +126,22 @@ def sign_message(cli_ctx, alias, message):
     if signer != account.address:
         cli_ctx.abort(f"Signer resolves incorrectly, got {signer}, expected {account.address}.")
 
-    # Message signed successfully
-    output_signature = signature.encode_vrs().hex()
-    click.echo(output_signature)
+    # Message signed successfully, return signature
+    click.echo(signature.encode_vrs().hex())
+
+
+@cli.command(short_help="Verify a message with your Trezor device")
+@click.argument("message")
+def verify_message(message, signature):
+
+    eip191message = encode_defunct(text=message)
+
+    try:
+        signer_address = Account.recover_message(eip191message, signature=signature)
+    except ValueError as exc:
+        message = "Message cannot be verified. Check the signature and try again."
+        raise LedgerSigningError(message) from exc
+
+    alias = accounts[signer_address].alias if signer_address in accounts else ""
+
+    click.echo(f"Signer: {signer_address}  {alias}")
