@@ -6,18 +6,10 @@ from ape.api.accounts import AccountAPI, AccountContainerAPI, TransactionAPI
 from ape.convert import to_address
 from ape.types import AddressType, MessageSignature, TransactionSignature
 from eth_account.messages import SignableMessage
-from hexbytes import HexBytes
 
 from ape_ledger.client import LedgerEthereumAccountClient, connect_to_ethereum_account
 from ape_ledger.exceptions import LedgerSigningError
 from ape_ledger.hdpath import HDAccountPath
-
-
-def _extract_version(msg: SignableMessage) -> bytes:
-    if isinstance(msg.version, HexBytes):
-        return msg.version.hex().encode()
-
-    return msg.version
 
 
 class AccountContainer(AccountContainerAPI):
@@ -84,7 +76,7 @@ class LedgerAccount(AccountAPI):
         return self._account_client
 
     def sign_message(self, msg: SignableMessage) -> Optional[MessageSignature]:
-        version = _extract_version(msg)
+        version = msg.version
 
         if version == b"E":
             signed_msg = self._client.sign_personal_message(msg.body)
