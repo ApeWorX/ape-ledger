@@ -87,16 +87,17 @@ class LedgerAccount(AccountAPI):
         version = _extract_version(msg)
 
         if version == b"E":
-            vrs = self._client.sign_personal_message(msg.body)
-        elif version == b"0x01":
-            vrs = self._client.sign_typed_data(msg.header, msg.body)
+            signed_msg = self._client.sign_personal_message(msg.body)
+        elif version == b"\x01":
+            signed_msg = self._client.sign_typed_data(msg.header, msg.body)
         else:
             raise LedgerSigningError(
                 f"Unsupported message-signing specification, (version={version!r})"
             )
 
-        return MessageSignature(*vrs)  # type: ignore
+        return MessageSignature(*signed_msg)  # type: ignore
 
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
-        vrs = self._client.sign_transaction(txn.as_dict())
-        return TransactionSignature(*vrs)  # type: ignore
+        signed_txn = self._client.sign_transaction(txn.as_dict())
+
+        return TransactionSignature(*signed_txn)  # type: ignore
