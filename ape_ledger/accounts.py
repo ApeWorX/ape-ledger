@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Iterator, Optional
 
-from ape.api.accounts import AccountAPI, AccountContainerAPI, TransactionAPI
+from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI, TransactionType
 from ape.convert import to_address
 from ape.types import AddressType, MessageSignature, TransactionSignature
 from eth_account.messages import SignableMessage
@@ -84,12 +84,29 @@ class LedgerAccount(AccountAPI):
             signed_msg = self._client.sign_typed_data(msg.header, msg.body)
         else:
             raise LedgerSigningError(
-                f"Unsupported message-signing specification, (version={version!r})"
+                f"Unsupported message-signing specification, (version={version!r})."
             )
 
         return MessageSignature(*signed_msg)  # type: ignore
 
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
-        signed_txn = self._client.sign_transaction(txn.as_dict())
+        txn_dict = {
+            "chainId": txn.chain_id,
+            "data": txn.data,
+            "nonce": txn.nonce,
+            "gas": txn.gas_limit,
+        }
 
+        if txn.receiver:
+            txn_dict["to"] = txn.receiver
+
+        txn_type = TransactionType(txn.type)  # In case it is not enum
+        if txn_type == TransactionType.STATIC:
+            txn_dict["gasPrice"] = txn.gas_price
+        elif txn_type == TransactionType.DYNAMIC:
+            txn_dict["type"] = TransactionType.DYNAMIC.value
+            txn_dict["maxPriorityFeePerGas"] = txn.max_fee
+            txn_dict["maxFeePerGas"] = txn.max_priority_fee
+
+        signed_txn = self._client.sign_transaction(txn_dict)
         return TransactionSignature(*signed_txn)  # type: ignore

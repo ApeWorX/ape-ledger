@@ -7,8 +7,9 @@ import time
 from typing import Dict, List, Optional, Tuple
 
 import hid  # type: ignore
-import rlp  # type: ignore
+import rlp
 from eth_account._utils.legacy_transactions import serializable_unsigned_transaction_from_dict
+from eth_account._utils.typed_transactions import DynamicFeeTransaction
 from eth_typing.evm import ChecksumAddress
 from eth_utils import to_checksum_address
 
@@ -363,8 +364,8 @@ class LedgerEthereumAccountClient:
         """
 
         unsigned_transaction = serializable_unsigned_transaction_from_dict(txn)
-        rlp_encoded_tx = rlp.encode(unsigned_transaction)
-        payload = self.path_bytes + rlp_encoded_tx
+        encoded_txn = rlp.encode(unsigned_transaction)
+        payload = self.path_bytes + encoded_txn
         chunks = [payload[i : i + 255] for i in range(0, len(payload), 255)]  # noqa: E203
         apdu_param1 = _Code.P1_FIRST
         reply = None
