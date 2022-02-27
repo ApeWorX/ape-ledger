@@ -102,11 +102,11 @@ class LedgerAccount(AccountAPI):
 
         txn_type = TransactionType(txn.type)  # In case it is not enum
         if txn_type == TransactionType.STATIC:
-            txn_dict["gasPrice"] = txn.gas_price
+            txn_dict["gasPrice"] = txn.gas_price  # type: ignore
         elif txn_type == TransactionType.DYNAMIC:
             txn_dict["type"] = TransactionType.DYNAMIC.value
             txn_dict["maxPriorityFeePerGas"] = txn.max_fee
-            txn_dict["maxFeePerGas"] = txn.max_priority_fee
+            txn_dict["maxFeePerGas"] = txn.max_priority_fee  # type: ignore
 
         signed_txn = self._client.sign_transaction(txn_dict)
         return TransactionSignature(*signed_txn)  # type: ignore

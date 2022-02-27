@@ -7,9 +7,8 @@ import time
 from typing import Dict, List, Optional, Tuple
 
 import hid  # type: ignore
-import rlp
+import rlp  # type: ignore
 from eth_account._utils.legacy_transactions import serializable_unsigned_transaction_from_dict
-from eth_account._utils.typed_transactions import DynamicFeeTransaction
 from eth_typing.evm import ChecksumAddress
 from eth_utils import to_checksum_address
 
