@@ -2,10 +2,10 @@ import json
 from pathlib import Path
 
 import pytest
+from ape_ethereum.ecosystem import StaticFeeTransaction
 from eip712.messages import EIP712Message, EIP712Type
 from eth_account.messages import SignableMessage
 
-from ape_ethereum.ecosystem import StaticFeeTransaction
 from ape_ledger.accounts import AccountContainer, LedgerAccount
 from ape_ledger.exceptions import LedgerSigningError
 from conftest import TEST_ADDRESS, TEST_ALIAS, TEST_HD_PATH, assert_account
@@ -115,9 +115,7 @@ class TestLedgerAccount:
             account.sign_message(message)
 
         actual = str(err.value)
-        expected = (
-            f"Unsupported message-signing specification, (version={unsupported_version})."
-        )
+        expected = f"Unsupported message-signing specification, (version={unsupported_version})."
         assert actual == expected
 
     def test_sign_transaction(self, mocker, account, account_connection):
