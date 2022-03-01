@@ -2,14 +2,18 @@ import json
 from pathlib import Path
 from typing import Iterator, Optional
 
+import rlp  # type: ignore
 from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI, TransactionType
 from ape.convert import to_address
+from ape.logging import logger
 from ape.types import AddressType, MessageSignature, TransactionSignature
 from eth_account.messages import SignableMessage
+from hexbytes import HexBytes
 
 from ape_ledger.client import LedgerEthereumAccountClient, connect_to_ethereum_account
 from ape_ledger.exceptions import LedgerSigningError
 from ape_ledger.hdpath import HDAccountPath
+from ape_ledger.objects import DynamicFeeTransaction, StaticFeeTransaction
 
 
 class AccountContainer(AccountContainerAPI):
@@ -78,10 +82,18 @@ class LedgerAccount(AccountAPI):
     def sign_message(self, msg: SignableMessage) -> Optional[MessageSignature]:
         version = msg.version
 
+        if not self.networks.active_provider:
+            chain_id = 0
+            logger.warning(
+                f"Unknown chain ID for determining parity bit. Using default value '{chain_id}'."
+            )
+        else:
+            chain_id = self.networks.active_provider.chain_id
+
         if version == b"E":
-            signed_msg = self._client.sign_personal_message(msg.body)
+            signed_msg = self._client.sign_personal_message(msg.body, chain_id)
         elif version == b"\x01":
-            signed_msg = self._client.sign_typed_data(msg.header, msg.body)
+            signed_msg = self._client.sign_typed_data(msg.header, msg.body, chain_id)
         else:
             raise LedgerSigningError(
                 f"Unsupported message-signing specification, (version={version!r})."
@@ -102,11 +114,12 @@ class LedgerAccount(AccountAPI):
 
         txn_type = TransactionType(txn.type)  # In case it is not enum
         if txn_type == TransactionType.STATIC:
-            txn_dict["gasPrice"] = txn.gas_price  # type: ignore
-        elif txn_type == TransactionType.DYNAMIC:
-            txn_dict["type"] = TransactionType.DYNAMIC.value
-            txn_dict["maxPriorityFeePerGas"] = txn.max_fee
-            txn_dict["maxFeePerGas"] = txn.max_priority_fee  # type: ignore
+            serializable_txn = StaticFeeTransaction(**txn.as_dict())
+            txn_bytes = rlp.encode(serializable_txn, StaticFeeTransaction)
+        else:
+            serializable_txn = DynamicFeeTransaction(**txn.as_dict())
+            version_byte = bytes(HexBytes(TransactionType.DYNAMIC.value))
+            txn_bytes = version_byte + rlp.encode(serializable_txn, DynamicFeeTransaction)
 
-        signed_txn = self._client.sign_transaction(txn_dict)
+        signed_txn = self._client.sign_transaction(txn_bytes, txn.chain_id)
         return TransactionSignature(*signed_txn)  # type: ignore

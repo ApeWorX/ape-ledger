@@ -4,11 +4,9 @@ https://github.com/vegaswap/ledgertools/blob/master/ledger_usb.py
 """
 import struct
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import hid  # type: ignore
-import rlp  # type: ignore
-from eth_account._utils.legacy_transactions import serializable_unsigned_transaction_from_dict
 from eth_typing.evm import ChecksumAddress
 from eth_utils import to_checksum_address
 
@@ -329,7 +327,7 @@ class LedgerEthereumAccountClient:
         return _to_vrs(reply)
 
     def sign_typed_data(
-        self, domain_hash: bytes, message_hash: bytes
+        self, domain_hash: bytes, message_hash: bytes, chain_id: int
     ) -> Optional[Tuple[int, bytes, bytes]]:
         """
         Sign an Ethereum message following the EIP 712 specification.
@@ -347,9 +345,18 @@ class LedgerEthereumAccountClient:
         builder = APDUBuilder(_Code.INS_SIGN_EIP_712)
         builder.append(self.path_bytes, encoded_message)
         reply = self._client.exchange(builder.apdu)
-        return _to_vrs(reply)
+        v, r, s = _to_vrs(reply)
 
-    def sign_transaction(self, txn: Dict) -> Optional[Tuple[int, bytes, bytes]]:
+        # Compute parity
+        if (chain_id * 2 + 35) + 1 > 255:
+            ecc_parity = v - ((chain_id * 2 + 35) % 256)
+        else:
+            ecc_parity = (v + 1) % 2
+
+        v = int("%02X" % ecc_parity, 16)
+        return v, r, s
+
+    def sign_transaction(self, txn: bytes, chain_id: int) -> Optional[Tuple[int, bytes, bytes]]:
         """
         Sign a transaction using your Ledger device. You will need to follow
         the prompts on the device to validate the transaction data.
@@ -362,9 +369,7 @@ class LedgerEthereumAccountClient:
           RLP transaction chunk                            - arbitrary
         """
 
-        unsigned_transaction = serializable_unsigned_transaction_from_dict(txn)
-        encoded_txn = rlp.encode(unsigned_transaction)
-        payload = self.path_bytes + encoded_txn
+        payload = self.path_bytes + txn
         chunks = [payload[i : i + 255] for i in range(0, len(payload), 255)]  # noqa: E203
         apdu_param1 = _Code.P1_FIRST
         reply = None
@@ -378,7 +383,15 @@ class LedgerEthereumAccountClient:
         if not reply:
             raise LedgerUsbError("Signing transaction failed - received 0 bytes in reply.")
 
-        return _to_vrs(reply)
+        v, r, s = _to_vrs(reply)
+
+        if (chain_id * 2 + 35) + 1 > 255:
+            ecc_parity = reply[0] - ((chain_id * 2 + 35) % 256)
+            v = (chain_id * 2 + 35) + ecc_parity
+        else:
+            v = reply[0]
+
+        return v, r, s
 
 
 class LedgerEthereumAppClient:
