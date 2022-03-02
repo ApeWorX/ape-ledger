@@ -171,7 +171,7 @@ class TestLedgerAccount:
         assert actual == expected
 
     @pytest.mark.parametrize(
-        "txn_data",
+        "txn,expected",
         (
             (
                 TEST_STATIC_FEE_TXN,
@@ -191,8 +191,7 @@ class TestLedgerAccount:
             ),
         ),
     )
-    def test_sign_transaction(self, txn_data, sign_txn_spy, account, account_connection):
-        txn, expected = txn_data
+    def test_sign_transaction(self, txn, expected, sign_txn_spy, account, account_connection):
         account.sign_transaction(txn)
         actual = sign_txn_spy.sign_transaction.call_args[0][0].hex()
         assert actual == expected
