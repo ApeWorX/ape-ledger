@@ -16,7 +16,7 @@ class AccountContainer(AccountContainerAPI):
     @property
     def accounts(self) -> Iterator[AccountAPI]:
         for account_file in self._account_files:
-            yield LedgerAccount(self, account_file)  # type: ignore
+            yield LedgerAccount(container=self, account_file_path=account_file)  # type: ignore
 
     def __setitem__(self, address: AddressType, account: AccountAPI):
         raise NotImplementedError()
@@ -77,8 +77,8 @@ class LedgerAccount(AccountAPI):
     @property
     def _client(self) -> LedgerEthereumAccountClient:
         if self.account_client is None:
-            self._account_client = connect_to_ethereum_account(self.address, self.hdpath)
-        return self._account_client
+            self.account_client = connect_to_ethereum_account(self.address, self.hdpath)
+        return self.account_client
 
     def sign_message(self, msg: SignableMessage) -> Optional[MessageSignature]:
         version = msg.version
