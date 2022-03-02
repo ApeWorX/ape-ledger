@@ -82,24 +82,37 @@ class LedgerAccount(AccountAPI):
     def sign_message(self, msg: SignableMessage) -> Optional[MessageSignature]:
         version = msg.version
 
-        if not self.networks.active_provider:
-            chain_id = 0
-            logger.warning(
-                f"Unknown chain ID for determining parity bit. Using default value '{chain_id}'."
-            )
-        else:
-            chain_id = self.networks.active_provider.chain_id
-
         if version == b"E":
-            signed_msg = self._client.sign_personal_message(msg.body, chain_id)
+            signed_msg = self._client.sign_personal_message(msg.body)
         elif version == b"\x01":
-            signed_msg = self._client.sign_typed_data(msg.header, msg.body, chain_id)
+            signed_msg = self._client.sign_typed_data(msg.header, msg.body)
         else:
             raise LedgerSigningError(
                 f"Unsupported message-signing specification, (version={version!r})."
             )
 
-        return MessageSignature(*signed_msg)  # type: ignore
+        v, r, s = signed_msg
+
+        if self.provider:
+            chain_id = self.provider.network.chain_id
+        else:
+            chain_id = 0
+            logger.warning(
+                f"The chain ID is not known. "
+                f"Using default value '{chain_id}' for determining parity bit."
+            )
+
+        # Compute parity
+
+        v = int.from_bytes(v, "big")
+        if (chain_id * 2 + 35) + 1 > 255:
+            ecc_parity = v - ((chain_id * 2 + 35) % 256)
+        else:
+            ecc_parity = (v + 1) % 2
+
+        v = int("%02X" % ecc_parity, 16)
+
+        return MessageSignature(v, r, s)  # type: ignore
 
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
         txn_dict = {
@@ -121,5 +134,12 @@ class LedgerAccount(AccountAPI):
             version_byte = bytes(HexBytes(TransactionType.DYNAMIC.value))
             txn_bytes = version_byte + rlp.encode(serializable_txn, DynamicFeeTransaction)
 
-        signed_txn = self._client.sign_transaction(txn_bytes, txn.chain_id)
-        return TransactionSignature(*signed_txn)  # type: ignore
+        v, r, s = self._client.sign_transaction(txn_bytes)
+
+        v = int.from_bytes(v, "big")
+        chain_id = txn.chain_id
+        if txn_type == TransactionType.DYNAMIC and (chain_id * 2 + 35) + 1 > 255:
+            ecc_parity = v - ((chain_id * 2 + 35) % 256)
+            v = (chain_id * 2 + 35) + ecc_parity
+
+        return TransactionSignature(v, r, s)  # type: ignore

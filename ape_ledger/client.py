@@ -304,7 +304,7 @@ class LedgerEthereumAccountClient:
 
         return self._path_bytes
 
-    def sign_personal_message(self, message_bytes: bytes) -> Optional[Tuple[int, bytes, bytes]]:
+    def sign_personal_message(self, message_bytes: bytes) -> Tuple[int, bytes, bytes]:
         """
         Sign an Ethereum message only following the EIP 191 specification and using
         your Ledger device. You will need to follow the prompts on the device
@@ -326,9 +326,7 @@ class LedgerEthereumAccountClient:
         reply = self._client.exchange(builder.apdu)
         return _to_vrs(reply)
 
-    def sign_typed_data(
-        self, domain_hash: bytes, message_hash: bytes, chain_id: int
-    ) -> Optional[Tuple[int, bytes, bytes]]:
+    def sign_typed_data(self, domain_hash: bytes, message_hash: bytes) -> Tuple[int, bytes, bytes]:
         """
         Sign an Ethereum message following the EIP 712 specification.
 
@@ -345,18 +343,9 @@ class LedgerEthereumAccountClient:
         builder = APDUBuilder(_Code.INS_SIGN_EIP_712)
         builder.append(self.path_bytes, encoded_message)
         reply = self._client.exchange(builder.apdu)
-        v, r, s = _to_vrs(reply)
+        return _to_vrs(reply)
 
-        # Compute parity
-        if (chain_id * 2 + 35) + 1 > 255:
-            ecc_parity = v - ((chain_id * 2 + 35) % 256)
-        else:
-            ecc_parity = (v + 1) % 2
-
-        v = int("%02X" % ecc_parity, 16)
-        return v, r, s
-
-    def sign_transaction(self, txn: bytes, chain_id: int) -> Optional[Tuple[int, bytes, bytes]]:
+    def sign_transaction(self, txn: bytes) -> Tuple[int, bytes, bytes]:
         """
         Sign a transaction using your Ledger device. You will need to follow
         the prompts on the device to validate the transaction data.
@@ -383,15 +372,7 @@ class LedgerEthereumAccountClient:
         if not reply:
             raise LedgerUsbError("Signing transaction failed - received 0 bytes in reply.")
 
-        v, r, s = _to_vrs(reply)
-
-        if (chain_id * 2 + 35) + 1 > 255:
-            ecc_parity = reply[0] - ((chain_id * 2 + 35) % 256)
-            v = (chain_id * 2 + 35) + ecc_parity
-        else:
-            v = reply[0]
-
-        return v, r, s
+        return _to_vrs(reply)
 
 
 class LedgerEthereumAppClient:

@@ -7,7 +7,7 @@ from rlp.sedes import Binary  # type: ignore
 from rlp.sedes import List as ListSedes  # type: ignore
 from rlp.sedes import big_endian_int, binary  # type: ignore
 
-"""Inspired from https://github.com/unparalleled-js/ledger-eth-lib"""
+"""Inspired from https://github.com/mikeshultz/ledger-eth-lib"""
 
 
 def _encode_hex(receiver: Optional[Union[str, bytes]] = None) -> bytes:
