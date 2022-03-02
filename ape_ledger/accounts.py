@@ -125,7 +125,8 @@ class LedgerAccount(AccountAPI):
         v, r, s = self._client.sign_transaction(txn_bytes)
 
         chain_id = txn.chain_id
-        if (chain_id * 2 + 35) + 1 > 255:
+        # NOTE: EIP-1559 transactions don't pack 'chain_id' with 'v'.
+        if txn_type != TransactionType.DYNAMIC and (chain_id * 2 + 35) + 1 > 255:
             ecc_parity = v - ((chain_id * 2 + 35) % 256)
             v = (chain_id * 2 + 35) + ecc_parity
 
