@@ -3,7 +3,7 @@ from typing import Optional, Union
 from eth_typing import HexStr
 from eth_utils import add_0x_prefix, decode_hex
 from rlp import Serializable  # type: ignore
-from rlp.sedes import Binary, CountableList, BigEndianInt  # type: ignore
+from rlp.sedes import BigEndianInt, Binary, CountableList  # type: ignore
 from rlp.sedes import List as ListSedes  # type: ignore
 from rlp.sedes import big_endian_int, binary  # type: ignore
 
@@ -25,10 +25,12 @@ def _encode_hex(receiver: Optional[Union[str, bytes]] = None) -> bytes:
 # Define typed transaction common sedes.
 # [[{20 bytes}, [{32 bytes}...]]...], where ... means “zero or more of the thing to the left”.
 access_list_sede_type = CountableList(
-    ListSedes([
-        Binary.fixed_length(20, allow_empty=False),
-        CountableList(BigEndianInt(32)),
-    ]),
+    ListSedes(
+        [
+            Binary.fixed_length(20, allow_empty=False),
+            CountableList(BigEndianInt(32)),
+        ]
+    ),
 )
 
 
