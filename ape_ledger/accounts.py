@@ -103,8 +103,6 @@ class LedgerAccount(AccountAPI):
             )
 
         # Compute parity
-
-        v = int.from_bytes(v, "big")
         if (chain_id * 2 + 35) + 1 > 255:
             ecc_parity = v - ((chain_id * 2 + 35) % 256)
         else:
@@ -136,7 +134,6 @@ class LedgerAccount(AccountAPI):
 
         v, r, s = self._client.sign_transaction(txn_bytes)
 
-        v = int.from_bytes(v, "big")
         chain_id = txn.chain_id
         if txn_type == TransactionType.DYNAMIC and (chain_id * 2 + 35) + 1 > 255:
             ecc_parity = v - ((chain_id * 2 + 35) % 256)

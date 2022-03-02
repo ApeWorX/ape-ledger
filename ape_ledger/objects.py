@@ -3,7 +3,7 @@ from typing import Optional, Union
 from eth_typing import HexStr
 from eth_utils import add_0x_prefix, decode_hex
 from rlp import Serializable  # type: ignore
-from rlp.sedes import Binary  # type: ignore
+from rlp.sedes import Binary, CountableList, BigEndianInt  # type: ignore
 from rlp.sedes import List as ListSedes  # type: ignore
 from rlp.sedes import big_endian_int, binary  # type: ignore
 
@@ -12,7 +12,7 @@ from rlp.sedes import big_endian_int, binary  # type: ignore
 
 def _encode_hex(receiver: Optional[Union[str, bytes]] = None) -> bytes:
     if receiver is None:
-        receiver = b""
+        return b""
 
     if isinstance(receiver, str):
         add_0x_prefix(HexStr(receiver))
@@ -20,6 +20,16 @@ def _encode_hex(receiver: Optional[Union[str, bytes]] = None) -> bytes:
         return decode_hex(receiver)
 
     return receiver
+
+
+# Define typed transaction common sedes.
+# [[{20 bytes}, [{32 bytes}...]]...], where ... means “zero or more of the thing to the left”.
+access_list_sede_type = CountableList(
+    ListSedes([
+        Binary.fixed_length(20, allow_empty=False),
+        CountableList(BigEndianInt(32)),
+    ]),
+)
 
 
 class StaticFeeTransaction(Serializable):
@@ -70,7 +80,7 @@ class DynamicFeeTransaction(Serializable):
         ("receiver", Binary.fixed_length(20, allow_empty=True)),
         ("value", big_endian_int),
         ("data", binary),
-        ("access_list", ListSedes()),  # TODO: Support access lists
+        ("access_list", access_list_sede_type),
     ]
 
     def __init__(
@@ -88,8 +98,8 @@ class DynamicFeeTransaction(Serializable):
         super().__init__(
             chainId,
             nonce,
-            maxFeePerGas,
             maxPriorityFeePerGas,
+            maxFeePerGas,
             gas,
             _encode_hex(to),
             value,

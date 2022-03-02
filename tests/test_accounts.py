@@ -112,7 +112,7 @@ def account(mock_container):
 @pytest.fixture
 def sign_txn_spy(mocker):
     spy = mocker.spy(LedgerAccount, "_client")
-    spy.sign_transaction.return_value = (b"0", b"r", b"s")
+    spy.sign_transaction.return_value = (0, b"r", b"s")
     return spy
 
 
@@ -132,7 +132,7 @@ class TestLedgerAccount:
 
     def test_sign_message_personal(self, mocker, account, account_connection):
         spy = mocker.spy(LedgerAccount, "_client")
-        spy.sign_personal_message.return_value = (b"0", b"r", b"s")
+        spy.sign_personal_message.return_value = (0, b"r", b"s")
 
         message = SignableMessage(
             version=b"E", header=b"thereum Signed Message:\n6", body=b"I\xe2\x99\xa5SF"
@@ -146,7 +146,7 @@ class TestLedgerAccount:
 
     def test_sign_message_typed(self, mocker, account, account_connection):
         spy = mocker.spy(LedgerAccount, "_client")
-        spy.sign_typed_data.return_value = (b"0", b"r", b"s")
+        spy.sign_typed_data.return_value = (0, b"r", b"s")
 
         message = TEST_TYPED_MESSAGE.signable_message
         actual_v, actual_r, actual_s = account.sign_message(message)
