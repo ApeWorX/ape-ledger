@@ -63,20 +63,26 @@ class TestLedgerAccount:
     def test_address_returns_address_from_file(self, runner, mock_container):
         with runner.isolated_filesystem():
             create_account("account.json", TEST_HD_PATH)
-            account = LedgerAccount(container=mock_container, account_file_path=Path("account.json"))
+            account = LedgerAccount(
+                container=mock_container, account_file_path=Path("account.json")
+            )
             assert account.address.lower() == TEST_ADDRESS.lower()
 
     def test_hdpath_returns_address_from_file(self, runner, mock_container):
         with runner.isolated_filesystem():
             create_account("account.json", TEST_HD_PATH)
-            account = LedgerAccount(container=mock_container, account_file_path=Path("account.json"))
+            account = LedgerAccount(
+                container=mock_container, account_file_path=Path("account.json")
+            )
             assert account.hdpath.path == TEST_HD_PATH
 
     def test_sign_message_personal(self, mocker, runner, mock_container, account_connection):
         with runner.isolated_filesystem():
             create_account("account.json", TEST_HD_PATH)
             # noinspection PyArgumentList
-            account = LedgerAccount(container=mock_container, account_file_path=Path("account.json"))
+            account = LedgerAccount(
+                container=mock_container, account_file_path=Path("account.json")
+            )
             spy = mocker.spy(LedgerAccount, "_client")
             spy.sign_personal_message.return_value = (0, b"r", b"s")
 
@@ -94,7 +100,9 @@ class TestLedgerAccount:
         with runner.isolated_filesystem():
             create_account("account.json", TEST_HD_PATH)
             # noinspection PyArgumentList
-            account = LedgerAccount(container=mock_container, account_file_path=Path("account.json"))
+            account = LedgerAccount(
+                container=mock_container, account_file_path=Path("account.json")
+            )
             spy = mocker.spy(LedgerAccount, "_client")
             spy.sign_typed_data.return_value = (0, b"r", b"s")
 
@@ -110,7 +118,9 @@ class TestLedgerAccount:
         with runner.isolated_filesystem():
             create_account("account.json", TEST_HD_PATH)
             # noinspection PyArgumentList
-            account = LedgerAccount(container=mock_container, account_file_path=Path("account.json"))
+            account = LedgerAccount(
+                container=mock_container, account_file_path=Path("account.json")
+            )
 
             unsupported_version = b"X"
             message = SignableMessage(
