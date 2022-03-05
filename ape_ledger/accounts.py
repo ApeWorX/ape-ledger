@@ -2,14 +2,18 @@ import json
 from pathlib import Path
 from typing import Iterator, Optional
 
-from ape.api.accounts import AccountAPI, AccountContainerAPI, TransactionAPI
+import rlp  # type: ignore
+from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI, TransactionType
 from ape.convert import to_address
+from ape.logging import logger
 from ape.types import AddressType, MessageSignature, TransactionSignature
 from eth_account.messages import SignableMessage
+from hexbytes import HexBytes
 
 from ape_ledger.client import LedgerEthereumAccountClient, connect_to_ethereum_account
 from ape_ledger.exceptions import LedgerSigningError
 from ape_ledger.hdpath import HDAccountPath
+from ape_ledger.objects import DynamicFeeTransaction, StaticFeeTransaction
 
 
 class AccountContainer(AccountContainerAPI):
@@ -92,8 +96,43 @@ class LedgerAccount(AccountAPI):
                 f"Unsupported message-signing specification, (version={version!r})."
             )
 
-        return MessageSignature(*signed_msg)  # type: ignore
+        v, r, s = signed_msg
+
+        if self.provider:
+            chain_id = self.provider.network.chain_id
+        else:
+            chain_id = 0
+            logger.warning(
+                f"The chain ID is not known. "
+                f"Using default value '{chain_id}' for determining parity bit."
+            )
+
+        # Compute parity
+        if (chain_id * 2 + 35) + 1 > 255:
+            ecc_parity = v - ((chain_id * 2 + 35) % 256)
+        else:
+            ecc_parity = (v + 1) % 2
+
+        v = int("%02X" % ecc_parity, 16)
+
+        return MessageSignature(v, r, s)  # type: ignore
 
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
-        signed_txn = self._client.sign_transaction(txn.dict())
-        return TransactionSignature(*signed_txn)  # type: ignore
+        txn_type = TransactionType(txn.type)  # In case it is not enum
+        if txn_type == TransactionType.STATIC:
+            serializable_txn = StaticFeeTransaction(**txn.dict())
+            txn_bytes = rlp.encode(serializable_txn, StaticFeeTransaction)
+        else:
+            serializable_txn = DynamicFeeTransaction(**txn.dict())
+            version_byte = bytes(HexBytes(TransactionType.DYNAMIC.value))
+            txn_bytes = version_byte + rlp.encode(serializable_txn, DynamicFeeTransaction)
+
+        v, r, s = self._client.sign_transaction(txn_bytes)
+
+        chain_id = txn.chain_id
+        # NOTE: EIP-1559 transactions don't pack 'chain_id' with 'v'.
+        if txn_type != TransactionType.DYNAMIC and (chain_id * 2 + 35) + 1 > 255:
+            ecc_parity = v - ((chain_id * 2 + 35) % 256)
+            v = (chain_id * 2 + 35) + ecc_parity
+
+        return TransactionSignature(v, r, s)  # type: ignore
