@@ -7,12 +7,12 @@ from ape import networks
 from ape.api import TransactionAPI
 from ape.api.networks import LOCAL_NETWORK_NAME
 from ape_ethereum.ecosystem import DynamicFeeTransaction, StaticFeeTransaction
+from conftest import TEST_ADDRESS, TEST_ALIAS, TEST_HD_PATH, assert_account
 from eip712.messages import EIP712Message, EIP712Type
 from eth_account.messages import SignableMessage
 
 from ape_ledger.accounts import AccountContainer, LedgerAccount
 from ape_ledger.exceptions import LedgerSigningError
-from conftest import TEST_ADDRESS, TEST_ALIAS, TEST_HD_PATH, assert_account
 
 
 class Person(EIP712Type):
