@@ -112,7 +112,6 @@ def delete_all(cli_ctx, skip_confirmation):
 @click.argument("alias")
 @click.argument("message", default="Hello World!")
 def sign_message(cli_ctx, alias, message):
-
     if alias not in accounts.aliases:
         cli_ctx.abort(f"Account with alias '{alias}' does not exist.")
 
@@ -133,7 +132,6 @@ def sign_message(cli_ctx, alias, message):
 @cli.command(short_help="Verify a message with your Trezor device")
 @click.argument("message")
 def verify_message(message, signature):
-
     eip191message = encode_defunct(text=message)
 
     try:

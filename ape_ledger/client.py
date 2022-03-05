@@ -4,11 +4,9 @@ https://github.com/vegaswap/ledgertools/blob/master/ledger_usb.py
 """
 import struct
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 import hid  # type: ignore
-import rlp  # type: ignore
-from eth_account._utils.legacy_transactions import serializable_unsigned_transaction_from_dict
 from eth_typing.evm import ChecksumAddress
 from eth_utils import to_checksum_address
 
@@ -306,7 +304,7 @@ class LedgerEthereumAccountClient:
 
         return self._path_bytes
 
-    def sign_personal_message(self, message_bytes: bytes) -> Optional[Tuple[int, bytes, bytes]]:
+    def sign_personal_message(self, message_bytes: bytes) -> Tuple[int, bytes, bytes]:
         """
         Sign an Ethereum message only following the EIP 191 specification and using
         your Ledger device. You will need to follow the prompts on the device
@@ -328,9 +326,7 @@ class LedgerEthereumAccountClient:
         reply = self._client.exchange(builder.apdu)
         return _to_vrs(reply)
 
-    def sign_typed_data(
-        self, domain_hash: bytes, message_hash: bytes
-    ) -> Optional[Tuple[int, bytes, bytes]]:
+    def sign_typed_data(self, domain_hash: bytes, message_hash: bytes) -> Tuple[int, bytes, bytes]:
         """
         Sign an Ethereum message following the EIP 712 specification.
 
@@ -349,7 +345,7 @@ class LedgerEthereumAccountClient:
         reply = self._client.exchange(builder.apdu)
         return _to_vrs(reply)
 
-    def sign_transaction(self, txn: Dict) -> Optional[Tuple[int, bytes, bytes]]:
+    def sign_transaction(self, txn: bytes) -> Tuple[int, bytes, bytes]:
         """
         Sign a transaction using your Ledger device. You will need to follow
         the prompts on the device to validate the transaction data.
@@ -362,9 +358,7 @@ class LedgerEthereumAccountClient:
           RLP transaction chunk                            - arbitrary
         """
 
-        unsigned_transaction = serializable_unsigned_transaction_from_dict(txn)
-        rlp_encoded_tx = rlp.encode(unsigned_transaction)
-        payload = self.path_bytes + rlp_encoded_tx
+        payload = self.path_bytes + txn
         chunks = [payload[i : i + 255] for i in range(0, len(payload), 255)]  # noqa: E203
         apdu_param1 = _Code.P1_FIRST
         reply = None
