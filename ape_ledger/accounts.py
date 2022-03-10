@@ -4,9 +4,9 @@ from typing import Iterator, Optional
 
 import rlp  # type: ignore
 from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI, TransactionType
-from ape.convert import to_address
 from ape.logging import logger
 from ape.types import AddressType, MessageSignature, TransactionSignature
+from ape.utils import to_address
 from eth_account.messages import SignableMessage
 from hexbytes import HexBytes
 
