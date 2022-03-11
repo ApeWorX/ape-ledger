@@ -57,7 +57,7 @@ setup(
     install_requires=[
         "click>=8.0.0",
         "hidapi==0.10.1",
-        "eth-ape>=0.1.0b1",
+        "eth-ape>=0.1.0,<0.2.0",
         "eth-account>=0.5.6,<0.6.0",
         "eth-typing>=2.2.2",
         "eth-utils>=1.10.0",
@@ -70,7 +70,7 @@ setup(
             "ape_ledger=ape_ledger._cli:cli",
         ],
     },
-    python_requires=">=3.7,<4",
+    python_requires=">=3.7.2,<4",
     extras_require=extras_require,
     py_modules=["ape_ledger"],
     license="Apache-2.0",
