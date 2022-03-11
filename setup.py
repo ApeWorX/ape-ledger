@@ -12,7 +12,7 @@ extras_require = {
         "hypothesis>=6.2.0,<7.0",  # Strategy-based fuzzer
     ],
     "lint": [
-        "commitizen",  # Manage commits and publishing releases
+        "commitizen>=2.19,<2.20",  # Manage commits and publishing releases
         "black>=21.10b0,<22.0",  # auto-formatter and linter
         "mypy>=0.910,<1.0",  # Static type analyzer
         "flake8>=3.8.3,<4.0",  # Style linter
