@@ -4,9 +4,9 @@ from typing import Iterator, Optional
 
 import rlp  # type: ignore
 from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI, TransactionType
-from ape.convert import to_address
 from ape.logging import logger
 from ape.types import AddressType, MessageSignature, TransactionSignature
+from ape.utils import to_address
 from eth_account.messages import SignableMessage
 from hexbytes import HexBytes
 
@@ -17,7 +17,16 @@ from ape_ledger.objects import DynamicFeeTransaction, StaticFeeTransaction
 
 
 class AccountContainer(AccountContainerAPI):
-    _usb_device = None
+    @property
+    def accounts(self) -> Iterator[AccountAPI]:
+        for account_file in self._account_files:
+            yield LedgerAccount(container=self, account_file_path=account_file)  # type: ignore
+
+    def __setitem__(self, address: AddressType, account: AccountAPI):
+        raise NotImplementedError()
+
+    def __delitem__(self, address: AddressType):
+        raise NotImplementedError()
 
     @property
     def _account_files(self) -> Iterator[Path]:
@@ -30,10 +39,6 @@ class AccountContainer(AccountContainerAPI):
 
     def __len__(self) -> int:
         return len([*self._account_files])
-
-    def __iter__(self) -> Iterator[AccountAPI]:
-        for account_file in self._account_files:
-            yield LedgerAccount(self, account_file)  # type: ignore
 
     def save_account(self, alias: str, address: str, hd_path: str):
         """
@@ -51,14 +56,14 @@ class AccountContainer(AccountContainerAPI):
 
 
 class LedgerAccount(AccountAPI):
-    _account_file_path: Path
+    account_file_path: Path
 
     # Optional because it's lazily loaded
-    _account_client: Optional[LedgerEthereumAccountClient] = None
+    account_client: Optional[LedgerEthereumAccountClient] = None
 
     @property
     def alias(self) -> str:
-        return self._account_file_path.stem
+        return self.account_file_path.stem
 
     @property
     def address(self) -> AddressType:
@@ -71,13 +76,13 @@ class LedgerAccount(AccountAPI):
 
     @property
     def account_file(self) -> dict:
-        return json.loads(self._account_file_path.read_text())
+        return json.loads(self.account_file_path.read_text())
 
     @property
     def _client(self) -> LedgerEthereumAccountClient:
-        if self._account_client is None:
-            self._account_client = connect_to_ethereum_account(self.address, self.hdpath)
-        return self._account_client
+        if self.account_client is None:
+            self.account_client = connect_to_ethereum_account(self.address, self.hdpath)
+        return self.account_client
 
     def sign_message(self, msg: SignableMessage) -> Optional[MessageSignature]:
         version = msg.version
@@ -115,10 +120,10 @@ class LedgerAccount(AccountAPI):
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
         txn_type = TransactionType(txn.type)  # In case it is not enum
         if txn_type == TransactionType.STATIC:
-            serializable_txn = StaticFeeTransaction(**txn.as_dict())
+            serializable_txn = StaticFeeTransaction(**txn.dict())
             txn_bytes = rlp.encode(serializable_txn, StaticFeeTransaction)
         else:
-            serializable_txn = DynamicFeeTransaction(**txn.as_dict())
+            serializable_txn = DynamicFeeTransaction(**txn.dict())
             version_byte = bytes(HexBytes(TransactionType.DYNAMIC.value))
             txn_bytes = version_byte + rlp.encode(serializable_txn, DynamicFeeTransaction)
 

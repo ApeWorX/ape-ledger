@@ -12,7 +12,8 @@ from eth_account.messages import SignableMessage
 
 from ape_ledger.accounts import AccountContainer, LedgerAccount
 from ape_ledger.exceptions import LedgerSigningError
-from conftest import TEST_ADDRESS, TEST_ALIAS, TEST_HD_PATH, assert_account
+
+from .conftest import TEST_ADDRESS, TEST_ALIAS, TEST_HD_PATH, assert_account
 
 
 class Person(EIP712Type):
@@ -89,11 +90,6 @@ def account_connection(mocker, ledger_account):
     return patch
 
 
-@pytest.fixture
-def mock_config_manager(mocker):
-    return mocker.MagicMock()
-
-
 @pytest.fixture(autouse=True)
 def isolated_file_system(runner):
     with runner.isolated_filesystem():
@@ -103,10 +99,8 @@ def isolated_file_system(runner):
 @pytest.fixture
 def account(mock_container):
     create_account("account.json", TEST_HD_PATH)
-    account = LedgerAccount(mock_container, Path("account.json"))
-    with networks.parse_network_choice(f"ethereum:{LOCAL_NETWORK_NAME}:test") as provider:
-        account.provider = provider
-        yield account
+    with networks.parse_network_choice(f"ethereum:{LOCAL_NETWORK_NAME}:test"):
+        yield LedgerAccount(container=mock_container, account_file_path=Path("account.json"))
 
 
 @pytest.fixture
@@ -117,8 +111,8 @@ def sign_txn_spy(mocker):
 
 
 class TestAccountContainer:
-    def test_save_account(self, mock_container, mock_config_manager):
-        container = AccountContainer(Path("."), LedgerAccount, mock_config_manager)
+    def test_save_account(self, mock_container):
+        container = AccountContainer(data_folder=Path("."), account_type=LedgerAccount)
         container.save_account(TEST_ALIAS, TEST_ADDRESS, TEST_HD_PATH)
         assert_account(f"{TEST_ALIAS}.json", expected_hdpath=TEST_HD_PATH)
 

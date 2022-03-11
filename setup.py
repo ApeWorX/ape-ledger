@@ -12,6 +12,7 @@ extras_require = {
         "hypothesis>=6.2.0,<7.0",  # Strategy-based fuzzer
     ],
     "lint": [
+        "commitizen>=2.19,<2.20",  # Manage commits and publishing releases
         "black>=21.10b0,<22.0",  # auto-formatter and linter
         "mypy>=0.910,<1.0",  # Static type analyzer
         "flake8>=3.8.3,<4.0",  # Style linter
@@ -23,7 +24,6 @@ extras_require = {
         "twine",  # Package upload tool
     ],
     "dev": [
-        "commitizen",  # Manage commits and publishing releases
         "pre-commit",  # Ensure that linters are run prior to commiting
         "pytest-watch",  # `ptw` test watcher/runner
         "IPython",  # Console for interacting
@@ -57,7 +57,7 @@ setup(
     install_requires=[
         "click>=8.0.0",
         "hidapi==0.10.1",
-        "eth-ape>=0.1.0b1",
+        "eth-ape>=0.1.0,<0.2.0",
         "eth-account>=0.5.6,<0.6.0",
         "eth-typing>=2.2.2",
         "eth-utils>=1.10.0",
@@ -70,7 +70,7 @@ setup(
             "ape_ledger=ape_ledger._cli:cli",
         ],
     },
-    python_requires=">=3.7,<4",
+    python_requires=">=3.7.2,<4",
     extras_require=extras_require,
     py_modules=["ape_ledger"],
     license="Apache-2.0",
