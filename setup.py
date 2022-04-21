@@ -13,10 +13,10 @@ extras_require = {
     ],
     "lint": [
         "commitizen>=2.19,<2.20",  # Manage commits and publishing releases
-        "black>=21.10b0,<22.0",  # auto-formatter and linter
+        "black>=22.3.0,<23.0",  # auto-formatter and linter
         "mypy>=0.910,<1.0",  # Static type analyzer
         "flake8>=3.8.3,<4.0",  # Style linter
-        "isort>=5.9.3,<6.0",  # Import sorting linter
+        "isort>=5.10.1,<6.0",  # Import sorting linter
     ],
     "release": [  # `release` GitHub Action job uses this
         "setuptools",  # Installation tool
@@ -57,7 +57,7 @@ setup(
     install_requires=[
         "click>=8.0.0",
         "hidapi==0.10.1",
-        "eth-ape>=0.1.0,<0.2.0",
+        "eth-ape>=0.2.1,<0.3.0",
         "eth-account>=0.5.6,<0.6.0",
         "eth-typing>=2.2.2",
         "eth-utils>=1.10.0",

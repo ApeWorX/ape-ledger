@@ -3,10 +3,10 @@ from pathlib import Path
 from typing import Iterator, Optional
 
 import rlp  # type: ignore
-from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI, TransactionType
+from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI
 from ape.logging import logger
 from ape.types import AddressType, MessageSignature, TransactionSignature
-from ape.utils import to_address
+from ape_ethereum.transactions import TransactionType
 from eth_account.messages import SignableMessage
 from hexbytes import HexBytes
 
@@ -67,7 +67,7 @@ class LedgerAccount(AccountAPI):
 
     @property
     def address(self) -> AddressType:
-        return to_address(self.account_file["address"])
+        return self.provider.network.ecosystem.decode_address(self.account_file["address"])
 
     @property
     def hdpath(self) -> HDAccountPath:
