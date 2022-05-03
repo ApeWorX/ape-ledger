@@ -67,7 +67,8 @@ class LedgerAccount(AccountAPI):
 
     @property
     def address(self) -> AddressType:
-        return self.provider.network.ecosystem.decode_address(self.account_file["address"])
+        ecosystem = self.network_manager.get_ecosystem("ethereum")
+        return ecosystem.decode_address(self.account_file["address"])
 
     @property
     def hdpath(self) -> HDAccountPath:

@@ -1,9 +1,7 @@
 import pytest
 from ape import accounts
 from ape._cli import cli
-from ape.managers.accounts import AccountManager
 
-from ape_ledger import LedgerAccount
 from ape_ledger.hdpath import HDBasePath
 
 from .conftest import TEST_ADDRESS, TEST_HD_PATH, assert_account
@@ -15,16 +13,6 @@ def _get_container():
 
 TEST_ALIAS = "__integration_test_alias__"
 TEST_ACCOUNT_PATH = _get_container().data_folder.joinpath(f"{TEST_ALIAS}.json")
-
-
-@pytest.fixture
-def mock_account_manager(mocker):
-    return mocker.MagicMock(spec=AccountManager)
-
-
-@pytest.fixture
-def mock_account(mocker):
-    return mocker.MagicMock(spec=LedgerAccount)
 
 
 @pytest.fixture
@@ -83,9 +71,7 @@ def test_add(runner, mock_device_connection):
     assert_account(expected_path, expected_hdpath=expected_hd_path)
 
 
-def test_add_when_hd_path_specified(
-    runner, mock_ethereum_app, mock_device_connection, mock_account
-):
+def test_add_when_hd_path_specified(runner, mock_ethereum_app, mock_device_connection):
     test_hd_path = "m/44'/60'/0'"
     mock_ethereum_app.hd_root_path = HDBasePath(test_hd_path)
 
