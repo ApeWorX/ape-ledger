@@ -49,8 +49,9 @@ def _get_account_path(alias=TEST_ALIAS):
     return container.data_folder.joinpath(f"{alias}.json")
 
 
-def test_list(runner, existing_account):
-    result = runner.invoke(cli, ["ledger", "list"])
+@pytest.mark.parametrize("cmd", (["ledger", "list"], ["accounts", "list", "--all"]))
+def test_list(runner, existing_account, cmd):
+    result = runner.invoke(cli, cmd)
     assert result.exit_code == 0, result.output
     assert TEST_ALIAS in result.output
     assert TEST_ADDRESS.lower() in result.output.lower()
