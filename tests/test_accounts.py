@@ -12,7 +12,8 @@ from eth_account.messages import SignableMessage
 
 from ape_ledger.accounts import AccountContainer, LedgerAccount
 from ape_ledger.exceptions import LedgerSigningError
-from tests.conftest import TEST_ADDRESS, TEST_ALIAS, TEST_HD_PATH, assert_account
+
+from .conftest import TEST_ADDRESS, TEST_ALIAS, TEST_HD_PATH, assert_account
 
 
 class Person(EIP712Type):
@@ -103,33 +104,10 @@ def account(mock_container):
 
 
 @pytest.fixture
-def client_spy(mocker):
-    return mocker.spy(LedgerAccount, "_client")
-
-
-@pytest.fixture
-def sign_personal_msg_spy(client_spy):
-    client_spy.sign_personal_message.return_value = (1, b"r", b"s")
-    return client_spy
-
-
-@pytest.fixture
-def sign_typed_msg_spy(client_spy):
-    client_spy.sign_typed_data.return_value = (2, b"r", b"s")
-    return client_spy
-
-
-@pytest.fixture
-def sign_txn_spy(client_spy):
-    client_spy.sign_transaction.return_value = (0, b"r", b"s")
-    return client_spy
-
-
-@pytest.fixture
-def signable_message():
-    return SignableMessage(
-        version=b"E", header=b"thereum Signed Message:\n6", body=b"I\xe2\x99\xa5SF"
-    )
+def sign_txn_spy(mocker):
+    spy = mocker.spy(LedgerAccount, "_client")
+    spy.sign_transaction.return_value = (0, b"r", b"s")
+    return spy
 
 
 class TestAccountContainer:
@@ -146,27 +124,31 @@ class TestLedgerAccount:
     def test_hdpath_returns_address_from_file(self, account):
         assert account.hdpath.path == TEST_HD_PATH
 
-    def test_sign_message_personal(
-        self, account, account_connection, sign_personal_msg_spy, signable_message
-    ):
-        actual_v, actual_r, actual_s = account.sign_message(signable_message)
+    def test_sign_message_personal(self, mocker, account, account_connection):
+        spy = mocker.spy(LedgerAccount, "_client")
+        spy.sign_personal_message.return_value = (0, b"r", b"s")
 
-        assert actual_v == 0
-        assert actual_r == b"r"
-        assert actual_s == b"s"
-        sign_personal_msg_spy.sign_personal_message.assert_called_once_with(signable_message.body)
-
-    def test_sign_message_typed(self, account, account_connection, sign_typed_msg_spy):
-        message = TEST_TYPED_MESSAGE.signable_message
-
-        actual = account.sign_message(message)
-        assert actual
-        actual_v, actual_r, actual_s = actual
+        message = SignableMessage(
+            version=b"E", header=b"thereum Signed Message:\n6", body=b"I\xe2\x99\xa5SF"
+        )
+        actual_v, actual_r, actual_s = account.sign_message(message)
 
         assert actual_v == 1
         assert actual_r == b"r"
         assert actual_s == b"s"
-        sign_typed_msg_spy.sign_typed_data.assert_called_once_with(message.header, message.body)
+        spy.sign_personal_message.assert_called_once_with(message.body)
+
+    def test_sign_message_typed(self, mocker, account, account_connection):
+        spy = mocker.spy(LedgerAccount, "_client")
+        spy.sign_typed_data.return_value = (0, b"r", b"s")
+
+        message = TEST_TYPED_MESSAGE.signable_message
+        actual_v, actual_r, actual_s = account.sign_message(message)
+
+        assert actual_v == 1
+        assert actual_r == b"r"
+        assert actual_s == b"s"
+        spy.sign_typed_data.assert_called_once_with(message.header, message.body)
 
     def test_sign_message_unsupported(self, account, account_connection):
         unsupported_version = b"X"
