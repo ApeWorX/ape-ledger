@@ -147,32 +147,28 @@ class TestLedgerAccount:
         assert account.hdpath.path == TEST_HD_PATH
 
     def test_sign_message_personal(
-        self, runner, account, account_connection, sign_personal_msg_spy, signable_message
+        self, account, account_connection, sign_personal_msg_spy, signable_message
     ):
-        with runner.isolation(input="y\n"):
-            actual_v, actual_r, actual_s = account.sign_message(signable_message)
+        actual_v, actual_r, actual_s = account.sign_message(signable_message)
 
-            assert actual_v == 0
-            assert actual_r == b"r"
-            assert actual_s == b"s"
-            sign_personal_msg_spy.sign_personal_message.assert_called_once_with(
-                signable_message.body
-            )
+        assert actual_v == 0
+        assert actual_r == b"r"
+        assert actual_s == b"s"
+        sign_personal_msg_spy.sign_personal_message.assert_called_once_with(signable_message.body)
 
-    def test_sign_message_typed(self, runner, account, account_connection, sign_typed_msg_spy):
+    def test_sign_message_typed(self, account, account_connection, sign_typed_msg_spy):
         message = TEST_TYPED_MESSAGE.signable_message
 
-        with runner.isolation(input="y\n"):
-            actual = account.sign_message(message)
-            assert actual
-            actual_v, actual_r, actual_s = actual
+        actual = account.sign_message(message)
+        assert actual
+        actual_v, actual_r, actual_s = actual
 
-            assert actual_v == 1
-            assert actual_r == b"r"
-            assert actual_s == b"s"
-            sign_typed_msg_spy.sign_typed_data.assert_called_once_with(message.header, message.body)
+        assert actual_v == 1
+        assert actual_r == b"r"
+        assert actual_s == b"s"
+        sign_typed_msg_spy.sign_typed_data.assert_called_once_with(message.header, message.body)
 
-    def test_sign_message_unsupported(self, runner, account, account_connection):
+    def test_sign_message_unsupported(self, account, account_connection):
         unsupported_version = b"X"
         message = SignableMessage(
             version=unsupported_version,
@@ -180,16 +176,11 @@ class TestLedgerAccount:
             body=b"I\xe2\x99\xa5SF",
         )
         with pytest.raises(LedgerSigningError) as err:
-            with runner.isolation(input="y\n"):
-                account.sign_message(message)
+            account.sign_message(message)
 
         actual = str(err.value)
         expected = f"Unsupported message-signing specification, (version={unsupported_version})."
         assert actual == expected
-
-    def test_sign_message_when_says_no(self, runner, account, account_connection, signable_message):
-        with runner.isolation(input="n\n"):
-            assert not account.sign_message(signable_message)
 
     @pytest.mark.parametrize(
         "txn,expected",
@@ -212,15 +203,7 @@ class TestLedgerAccount:
             ),
         ),
     )
-    def test_sign_transaction(
-        self, runner, txn, expected, sign_txn_spy, account, account_connection
-    ):
-        with runner.isolation(input="y\n"):
-            account.sign_transaction(txn)
-
+    def test_sign_transaction(self, txn, expected, sign_txn_spy, account, account_connection):
+        account.sign_transaction(txn)
         actual = sign_txn_spy.sign_transaction.call_args[0][0].hex()
         assert actual == expected
-
-    def test_sign_transaction_when_says_no(self, runner, sign_txn_spy, account, account_connection):
-        with runner.isolation(input="n\n"):
-            assert not account.sign_transaction(TEST_STATIC_FEE_TXN)

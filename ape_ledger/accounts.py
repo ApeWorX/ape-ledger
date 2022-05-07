@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Iterator, Optional, Union
+from typing import Iterator, Optional
 
 import click
 import rlp  # type: ignore
@@ -87,9 +87,7 @@ class LedgerAccount(AccountAPI):
         return self.account_client
 
     def sign_message(self, msg: SignableMessage) -> Optional[MessageSignature]:
-        if not self._prompt_to_sign(msg):
-            return None
-
+        click.echo(f"{msg}\nPlease follow the prompts on your device.")
         version = msg.version
         if version == b"E":
             signed_msg = self._client.sign_personal_message(msg.body)
@@ -122,9 +120,7 @@ class LedgerAccount(AccountAPI):
         return MessageSignature(v, r, s)  # type: ignore
 
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
-        if not self._prompt_to_sign(txn):
-            return None
-
+        click.echo(f"{txn}\nPlease follow the prompts on your device.")
         txn_type = TransactionType(txn.type)  # In case it is not enum
         if txn_type == TransactionType.STATIC:
             serializable_txn = StaticFeeTransaction(**txn.dict())
@@ -143,10 +139,3 @@ class LedgerAccount(AccountAPI):
             v = (chain_id * 2 + 35) + ecc_parity
 
         return TransactionSignature(v, r, s)  # type: ignore
-
-    def _prompt_to_sign(self, data: Union[SignableMessage, TransactionAPI]) -> bool:
-        if not click.confirm(f"{data}\n\nSign: "):
-            return False
-
-        click.echo("Please follow the prompts on your device.")
-        return True
