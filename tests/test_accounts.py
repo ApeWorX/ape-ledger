@@ -172,8 +172,9 @@ class TestLedgerAccount:
         expected = f"Unsupported message-signing specification, (version={unsupported_version})."
         assert actual == expected
 
-        # Should NOT print out faulty message
-        assert not capsys.readouterr().out
+        output = capsys.readouterr()
+        assert str(message) not in output.out
+        assert "Please follow the prompts on your device." not in output.out
 
     @pytest.mark.parametrize(
         "txn,expected",
