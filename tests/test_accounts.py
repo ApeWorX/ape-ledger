@@ -124,7 +124,7 @@ class TestLedgerAccount:
     def test_hdpath_returns_address_from_file(self, account):
         assert account.hdpath.path == TEST_HD_PATH
 
-    def test_sign_message_personal(self, mocker, account, account_connection):
+    def test_sign_message_personal(self, mocker, account, account_connection, capsys):
         spy = mocker.spy(LedgerAccount, "_client")
         spy.sign_personal_message.return_value = (0, b"r", b"s")
 
@@ -138,7 +138,11 @@ class TestLedgerAccount:
         assert actual_s == b"s"
         spy.sign_personal_message.assert_called_once_with(message.body)
 
-    def test_sign_message_typed(self, mocker, account, account_connection):
+        output = capsys.readouterr()
+        assert str(message) in output.out
+        assert "Please follow the prompts on your device." in output.out
+
+    def test_sign_message_typed(self, mocker, account, account_connection, capsys):
         spy = mocker.spy(LedgerAccount, "_client")
         spy.sign_typed_data.return_value = (0, b"r", b"s")
 
@@ -150,7 +154,11 @@ class TestLedgerAccount:
         assert actual_s == b"s"
         spy.sign_typed_data.assert_called_once_with(message.header, message.body)
 
-    def test_sign_message_unsupported(self, account, account_connection):
+        output = capsys.readouterr()
+        assert str(message) in output.out
+        assert "Please follow the prompts on your device." in output.out
+
+    def test_sign_message_unsupported(self, account, account_connection, capsys):
         unsupported_version = b"X"
         message = SignableMessage(
             version=unsupported_version,
@@ -163,6 +171,10 @@ class TestLedgerAccount:
         actual = str(err.value)
         expected = f"Unsupported message-signing specification, (version={unsupported_version})."
         assert actual == expected
+
+        output = capsys.readouterr()
+        assert str(message) not in output.out
+        assert "Please follow the prompts on your device." not in output.out
 
     @pytest.mark.parametrize(
         "txn,expected",
@@ -185,7 +197,13 @@ class TestLedgerAccount:
             ),
         ),
     )
-    def test_sign_transaction(self, txn, expected, sign_txn_spy, account, account_connection):
+    def test_sign_transaction(
+        self, txn, expected, sign_txn_spy, account, account_connection, capsys
+    ):
         account.sign_transaction(txn)
         actual = sign_txn_spy.sign_transaction.call_args[0][0].hex()
         assert actual == expected
+
+        output = capsys.readouterr()
+        assert str(txn) in output.out
+        assert "Please follow the prompts on your device." in output.out

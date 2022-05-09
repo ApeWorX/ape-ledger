@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Iterator, Optional, Union
 
+import click
 import rlp  # type: ignore
 from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI
 from ape.logging import logger
@@ -55,6 +56,10 @@ class AccountContainer(AccountContainerAPI):
             path.unlink()
 
 
+def _echo_object_to_sign(obj: Union[TransactionAPI, SignableMessage]):
+    click.echo(f"{obj}\nPlease follow the prompts on your device.")
+
+
 class LedgerAccount(AccountAPI):
     account_file_path: Path
 
@@ -87,10 +92,11 @@ class LedgerAccount(AccountAPI):
 
     def sign_message(self, msg: SignableMessage) -> Optional[MessageSignature]:
         version = msg.version
-
         if version == b"E":
+            _echo_object_to_sign(msg)
             signed_msg = self._client.sign_personal_message(msg.body)
         elif version == b"\x01":
+            _echo_object_to_sign(msg)
             signed_msg = self._client.sign_typed_data(msg.header, msg.body)
         else:
             raise LedgerSigningError(
@@ -128,6 +134,7 @@ class LedgerAccount(AccountAPI):
             version_byte = bytes(HexBytes(TransactionType.DYNAMIC.value))
             txn_bytes = version_byte + rlp.encode(serializable_txn, DynamicFeeTransaction)
 
+        _echo_object_to_sign(txn)
         v, r, s = self._client.sign_transaction(txn_bytes)
 
         chain_id = txn.chain_id
