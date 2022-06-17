@@ -28,7 +28,7 @@ def cli():
 @cli.command("list")
 @ape_cli_context()
 def _list(cli_ctx):
-    """List your Ledger accounts in your ape"""
+    """List your Ledger accounts in ape"""
 
     ledger_accounts = _get_ledger_accounts()
 
@@ -78,7 +78,7 @@ def add(cli_ctx, alias, hd_path):
 @ape_cli_context()
 @existing_alias_argument(account_type=LedgerAccount)
 def delete(cli_ctx, alias):
-    """Remove a Ledger account from ape."""
+    """Remove a Ledger account from ape"""
 
     container = accounts.containers.get("ledger")
     container.delete_account(alias)
