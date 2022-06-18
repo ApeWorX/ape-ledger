@@ -21,14 +21,14 @@ from ape_ledger.hdpath import HDBasePath
 @click.group(short_help="Manage Ledger accounts")
 def cli():
     """
-    Command-line helper for managing Ledger hardware device accounts.
+    Manage Ledger hardware device accounts.
     """
 
 
 @cli.command("list")
 @ape_cli_context()
 def _list(cli_ctx):
-    """List the Ledger accounts in your ape configuration"""
+    """List your Ledger accounts in ape"""
 
     ledger_accounts = _get_ledger_accounts()
 
@@ -64,7 +64,7 @@ def _get_ledger_accounts() -> List[LedgerAccount]:
     callback=lambda ctx, param, arg: HDBasePath(arg),
 )
 def add(cli_ctx, alias, hd_path):
-    """Add a account from your Ledger hardware wallet"""
+    """Add an account from your Ledger hardware wallet"""
 
     app = connect_to_ethereum_app(hd_path)
     choices = AddressPromptChoice(app)
@@ -78,7 +78,7 @@ def add(cli_ctx, alias, hd_path):
 @ape_cli_context()
 @existing_alias_argument(account_type=LedgerAccount)
 def delete(cli_ctx, alias):
-    """Remove a Ledger account from your ape configuration"""
+    """Remove a Ledger account from ape"""
 
     container = accounts.containers.get("ledger")
     container.delete_account(alias)
@@ -89,7 +89,7 @@ def delete(cli_ctx, alias):
 @ape_cli_context()
 @skip_confirmation_option("Don't ask for confirmation when removing all accounts")
 def delete_all(cli_ctx, skip_confirmation):
-    """Remove all Ledger accounts from your ape configuration"""
+    """Remove all Ledger accounts from ape"""
 
     container = accounts.containers.get("ledger")
     ledger_accounts = _get_ledger_accounts()
@@ -112,6 +112,8 @@ def delete_all(cli_ctx, skip_confirmation):
 @click.argument("alias")
 @click.argument("message", default="Hello World!")
 def sign_message(cli_ctx, alias, message):
+    """Sign a message using a Ledger account"""
+
     if alias not in accounts.aliases:
         cli_ctx.abort(f"Account with alias '{alias}' does not exist.")
 

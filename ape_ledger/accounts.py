@@ -105,7 +105,7 @@ class LedgerAccount(AccountAPI):
 
         v, r, s = signed_msg
 
-        if self.provider:
+        if self.network_manager.active_provider:
             chain_id = self.provider.network.chain_id
         else:
             chain_id = 0
