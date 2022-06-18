@@ -5,7 +5,7 @@ To get started with working on the codebase, use the following steps prepare you
 ```bash
 # Clone the github repo and navigate into the folder
 git clone https://github.com/ApeWorX/ape-ledger.git
-cd <PROJECT_NAME>
+cd ape-ledger
 
 # Create and load a virtual environment
 python3 -m venv venv
