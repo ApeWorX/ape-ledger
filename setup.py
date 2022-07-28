@@ -4,7 +4,7 @@ from setuptools import find_packages, setup  # type: ignore
 
 extras_require = {
     "test": [  # `test` GitHub Action jobs uses this
-        "pytest>=6.0,<7.0",  # Core testing package
+        "pytest>=6.0",  # Core testing package
         "pytest-xdist",  # multi-process runner
         "pytest-cov",  # Coverage analyzer plugin
         "pytest-mock",  # For creating mocks
@@ -12,8 +12,8 @@ extras_require = {
         "hypothesis>=6.2.0,<7.0",  # Strategy-based fuzzer
     ],
     "lint": [
-        "black>=22.3.0,<23.0",  # auto-formatter and linter
-        "mypy>=0.961,<1.0",  # Static type analyzer
+        "black>=22.6.0,<23.0",  # auto-formatter and linter
+        "mypy>=0.971,<1.0",  # Static type analyzer
         "flake8>=4.0.1,<5.0",  # Style linter
         "isort>=5.10.1,<6.0",  # Import sorting linter
     ],
@@ -57,7 +57,7 @@ setup(
     install_requires=[
         "click>=8.0.0",
         "hidapi==0.10.1",
-        "eth-ape>=0.3.0,<0.4.0",
+        "eth-ape>=0.4.0,<0.5.0",
         "eth-account>=0.5.6,<0.6.0",
         "eth-typing>=2.2.2",
         "eth-utils>=1.10.0",
@@ -89,6 +89,5 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
     ],
 )
