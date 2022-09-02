@@ -134,6 +134,9 @@ def sign_message(cli_ctx, alias, message, network):
 
 def _sign_message(account: AccountAPI, message: SignableMessage):
     signature = account.sign_message(message)
+    if not signature:
+        raise Abort("Failed to sign message.")
+
     signature_bytes = signature.encode_rsv()
 
     # Verify signature
