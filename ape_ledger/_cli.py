@@ -120,6 +120,7 @@ def sign_message(cli_ctx, alias, message):
     eip191message = encode_defunct(text=message)
     account = accounts.load(alias)
     signature = account.sign_message(eip191message)
+
     if not signature:
         cli_ctx.abort("Failed to sign message.")
 
