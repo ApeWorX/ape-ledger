@@ -416,6 +416,7 @@ def connect_to_ethereum_app(hd_path: HDBasePath) -> LedgerEthereumAppClient:
 
 class DeviceManager:
     _device: Optional[LedgerUsbDeviceClient] = None
+    _client_cls = LedgerUsbDeviceClient
 
     @property
     def device(self) -> LedgerUsbDeviceClient:
@@ -431,7 +432,7 @@ class DeviceManager:
             raise LedgerUsbError("No Ledger USB device found.")
 
         device = _get_device(hid_path)
-        self._device = LedgerUsbDeviceClient(device)
+        self._device = self._client_cls(device)
         return self._device
 
 
