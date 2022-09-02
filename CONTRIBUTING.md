@@ -11,7 +11,7 @@ cd ape-ledger
 python3 -m venv venv
 source venv/bin/activate
 
-# Install ape into the virtual environment
+# Install ape-ledger into the virtual environment
 python setup.py install
 
 # Install the developer dependencies (-e is interactive mode)

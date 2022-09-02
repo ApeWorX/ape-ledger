@@ -402,8 +402,7 @@ def connect_to_ethereum_account(
     Create an account client using an active device connection.
     """
 
-    device = connect_to_device()
-    return LedgerEthereumAccountClient(device, address, hd_account_path)
+    return LedgerEthereumAccountClient(device_manager.device, address, hd_account_path)
 
 
 def connect_to_ethereum_app(hd_path: HDBasePath) -> LedgerEthereumAppClient:
@@ -412,27 +411,38 @@ def connect_to_ethereum_app(hd_path: HDBasePath) -> LedgerEthereumAppClient:
     using an active device connection.
     """
 
-    device = connect_to_device()
-    return LedgerEthereumAppClient(device, hd_path)
+    return LedgerEthereumAppClient(device_manager.device, hd_path)
 
 
-def connect_to_device() -> LedgerUsbDeviceClient:
-    """
-    Create a Ledger device client and connect to it.
-    """
+class DeviceManager:
+    _device: Optional[LedgerUsbDeviceClient] = None
+    _client_cls = LedgerUsbDeviceClient
 
-    hid_path = _get_hid_device_path()
-    if hid_path is None:
-        raise LedgerUsbError("No Ledger USB device found.")
+    @property
+    def device(self) -> LedgerUsbDeviceClient:
+        """
+        Create a Ledger device client and connect to it.
+        """
 
-    device = _get_device(hid_path)
-    return LedgerUsbDeviceClient(device)
+        if self._device:
+            return self._device
+
+        hid_path = _get_hid_device_path()
+        if hid_path is None:
+            raise LedgerUsbError("No Ledger USB device found.")
+
+        device = _get_device(hid_path)
+        self._device = self._client_cls(device)
+        return self._device
+
+
+device_manager = DeviceManager()
 
 
 __all__ = [
-    "connect_to_device",
     "connect_to_ethereum_account",
     "connect_to_ethereum_app",
+    "device_manager",
     "LedgerEthereumAccountClient",
     "LedgerEthereumAppClient",
     "LedgerUsbDeviceClient",

@@ -55,15 +55,16 @@ setup(
     url="https://github.com/ApeWorX/ape-ledger",
     include_package_data=True,
     install_requires=[
-        "click>=8.0.0",
+        "click",  # Use same version as eth-ape
+        "eth-ape>=0.4.5,<0.5.0",
         "hidapi==0.10.1",
-        "eth-ape>=0.4.0,<0.5.0",
-        "eth-account>=0.5.6,<0.6.0",
-        "eth-typing>=2.2.2",
-        "eth-utils>=1.10.0",
-        "hexbytes==0.2.2",
         "importlib-metadata",
         "rlp>=2.0.1",
+        # EF Dependencies
+        "eth-account",  # Use same version as eth-ape
+        "eth-typing",  # Influenced by eth-ape
+        "eth-utils",  # Use same version as eth-ape
+        "hexbytes",  # Use same version as eth-ape
     ],
     entry_points={
         "ape_cli_subcommands": [
@@ -89,5 +90,6 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
 )

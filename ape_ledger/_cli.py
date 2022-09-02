@@ -120,6 +120,10 @@ def sign_message(cli_ctx, alias, message):
     eip191message = encode_defunct(text=message)
     account = accounts.load(alias)
     signature = account.sign_message(eip191message)
+
+    if not signature:
+        cli_ctx.abort("Failed to sign message.")
+
     signature_bytes = signature.encode_rsv()
 
     # Verify signature
@@ -128,11 +132,12 @@ def sign_message(cli_ctx, alias, message):
         cli_ctx.abort(f"Signer resolves incorrectly, got {signer}, expected {account.address}.")
 
     # Message signed successfully, return signature
-    click.echo(signature.encode_vrs().hex())
+    click.echo(signature_bytes.hex())
 
 
 @cli.command(short_help="Verify a message with your Trezor device")
 @click.argument("message")
+@click.argument("signature")
 def verify_message(message, signature):
     eip191message = encode_defunct(text=message)
 
@@ -143,5 +148,4 @@ def verify_message(message, signature):
         raise LedgerSigningError(message) from exc
 
     alias = accounts[signer_address].alias if signer_address in accounts else ""
-
     click.echo(f"Signer: {signer_address}  {alias}")
