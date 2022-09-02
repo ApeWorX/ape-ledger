@@ -5,7 +5,6 @@ from typing import Iterator, Optional, Union
 import click
 import rlp  # type: ignore
 from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI
-from ape.logging import logger
 from ape.types import AddressType, MessageSignature, TransactionSignature
 from ape_ethereum.transactions import TransactionType
 from eth_account.messages import SignableMessage
@@ -104,16 +103,6 @@ class LedgerAccount(AccountAPI):
             )
 
         v, r, s = signed_msg
-
-        if self.network_manager.active_provider:
-            chain_id = self.provider.network.chain_id
-        else:
-            chain_id = 1
-            logger.warning(
-                f"The chain ID is not known. "
-                f"Using default value '{chain_id}' for determining parity bit."
-            )
-
         return MessageSignature(v, r, s)  # type: ignore
 
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
