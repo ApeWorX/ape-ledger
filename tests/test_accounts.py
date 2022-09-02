@@ -130,7 +130,7 @@ class TestLedgerAccount:
         )
         actual_v, actual_r, actual_s = account.sign_message(message)
 
-        assert actual_v == 262554645881088
+        assert actual_v == 0
         assert actual_r == b"r"
         assert actual_s == b"s"
         spy.sign_personal_message.assert_called_once_with(message.body)
@@ -146,7 +146,7 @@ class TestLedgerAccount:
         message = TEST_TYPED_MESSAGE.signable_message
         actual_v, actual_r, actual_s = account.sign_message(message)
 
-        assert actual_v == 262554645881088
+        assert actual_v == 0
         assert actual_r == b"r"
         assert actual_s == b"s"
         spy.sign_typed_data.assert_called_once_with(message.header, message.body)

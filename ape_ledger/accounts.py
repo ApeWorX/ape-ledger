@@ -114,10 +114,6 @@ class LedgerAccount(AccountAPI):
                 f"Using default value '{chain_id}' for determining parity bit."
             )
 
-        # Compute parity
-        size = chain_id * 2 + 35
-        ecc_parity = v - (size % 256) if size + 1 > 255 else (v + 1) % 2
-        v = (chain_id * 2 + 35) + ecc_parity
         return MessageSignature(v, r, s)  # type: ignore
 
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
