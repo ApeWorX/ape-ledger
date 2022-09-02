@@ -3,7 +3,6 @@ from typing import List
 import click
 from ape import accounts
 from ape.cli import (
-    Abort,
     ape_cli_context,
     existing_alias_argument,
     non_existing_alias_argument,
@@ -122,14 +121,14 @@ def sign_message(cli_ctx, alias, message):
     account = accounts.load(alias)
     signature = account.sign_message(eip191message)
     if not signature:
-        raise Abort("Failed to sign message.")
+        cli_ctx.abort("Failed to sign message.")
 
     signature_bytes = signature.encode_rsv()
 
     # Verify signature
     signer = Account.recover_message(eip191message, signature=signature_bytes)
     if signer != account.address:
-        raise Abort(f"Signer resolves incorrectly, got {signer}, expected {account.address}.")
+        cli_ctx.abort(f"Signer resolves incorrectly, got {signer}, expected {account.address}.")
 
     # Message signed successfully, return signature
     click.echo(signature_bytes.hex())
