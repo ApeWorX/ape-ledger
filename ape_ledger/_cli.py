@@ -2,12 +2,16 @@ from typing import List
 
 import click
 from ape import accounts
+from ape.api import AccountAPI
 from ape.cli import (
+    Abort,
     ape_cli_context,
     existing_alias_argument,
+    network_option,
     non_existing_alias_argument,
     skip_confirmation_option,
 )
+from ape.types import SignableMessage
 from eth_account import Account
 from eth_account.messages import encode_defunct
 
@@ -111,7 +115,8 @@ def delete_all(cli_ctx, skip_confirmation):
 @ape_cli_context()
 @click.argument("alias")
 @click.argument("message", default="Hello World!")
-def sign_message(cli_ctx, alias, message):
+@network_option(default=None)
+def sign_message(cli_ctx, alias, message, network):
     """Sign a message using a Ledger account"""
 
     if alias not in accounts.aliases:
@@ -119,20 +124,30 @@ def sign_message(cli_ctx, alias, message):
 
     eip191message = encode_defunct(text=message)
     account = accounts.load(alias)
-    signature = account.sign_message(eip191message)
+    if network:
+        # The network is used for the parity bit (v) in the signature.
+        with cli_ctx.network_manager.parse_network_choice(network):
+            _sign_message(account, eip191message)
+    else:
+        _sign_message(account, eip191message)
+
+
+def _sign_message(account: AccountAPI, message: SignableMessage):
+    signature = account.sign_message(message)
     signature_bytes = signature.encode_rsv()
 
     # Verify signature
-    signer = Account.recover_message(eip191message, signature=signature_bytes)
+    signer = Account.recover_message(message, signature=signature_bytes)
     if signer != account.address:
-        cli_ctx.abort(f"Signer resolves incorrectly, got {signer}, expected {account.address}.")
+        raise Abort(f"Signer resolves incorrectly, got {signer}, expected {account.address}.")
 
     # Message signed successfully, return signature
-    click.echo(signature.encode_vrs().hex())
+    click.echo(signature_bytes.hex())
 
 
 @cli.command(short_help="Verify a message with your Trezor device")
 @click.argument("message")
+@click.argument("signature")
 def verify_message(message, signature):
     eip191message = encode_defunct(text=message)
 
@@ -143,5 +158,4 @@ def verify_message(message, signature):
         raise LedgerSigningError(message) from exc
 
     alias = accounts[signer_address].alias if signer_address in accounts else ""
-
     click.echo(f"Signer: {signer_address}  {alias}")

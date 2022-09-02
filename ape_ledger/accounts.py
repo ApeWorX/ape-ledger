@@ -108,20 +108,16 @@ class LedgerAccount(AccountAPI):
         if self.network_manager.active_provider:
             chain_id = self.provider.network.chain_id
         else:
-            chain_id = 0
+            chain_id = 1
             logger.warning(
                 f"The chain ID is not known. "
                 f"Using default value '{chain_id}' for determining parity bit."
             )
 
         # Compute parity
-        if (chain_id * 2 + 35) + 1 > 255:
-            ecc_parity = v - ((chain_id * 2 + 35) % 256)
-        else:
-            ecc_parity = (v + 1) % 2
-
-        v = int("%02X" % ecc_parity, 16)
-
+        size = chain_id * 2 + 35
+        ecc_parity = v - (size % 256) if size + 1 > 255 else (v + 1) % 2
+        v = (chain_id * 2 + 35) + ecc_parity
         return MessageSignature(v, r, s)  # type: ignore
 
     def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
