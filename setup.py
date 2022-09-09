@@ -23,7 +23,7 @@ extras_require = {
         "twine",  # Package upload tool
     ],
     "dev": [
-        "commitizen>=2.19,<2.20",  # Manage commits and publishing releases
+        "commitizen",  # Manage commits and publishing releases
         "pre-commit",  # Ensure that linters are run prior to commiting
         "pytest-watch",  # `ptw` test watcher/runner
         "IPython",  # Console for interacting
@@ -56,7 +56,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "click",  # Use same version as eth-ape
-        "eth-ape>=0.5.0,<0.6.0",
+        "eth-ape>=0.5.0,<0.6",
         "hidapi==0.10.1",
         "importlib-metadata",
         "rlp>=2.0.1",
