@@ -105,7 +105,7 @@ class LedgerAccount(AccountAPI):
         v, r, s = signed_msg
         return MessageSignature(v, r, s)  # type: ignore
 
-    def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
+    def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionAPI]:
         txn_type = TransactionType(txn.type)  # In case it is not enum
         if txn_type == TransactionType.STATIC:
             serializable_txn = StaticFeeTransaction(**txn.dict())
@@ -124,4 +124,5 @@ class LedgerAccount(AccountAPI):
             ecc_parity = v - ((chain_id * 2 + 35) % 256)
             v = (chain_id * 2 + 35) + ecc_parity
 
-        return TransactionSignature(v, r, s)  # type: ignore
+        txn.signature = TransactionSignature(v, r, s)  # type: ignore
+        return txn
