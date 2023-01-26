@@ -104,9 +104,7 @@ _LEDGER_USAGE_PAGE_ID = 0xFFA0
 
 
 class APDUBuilder:
-    def __init__(
-        self, ins: int, p1: int = _Code.P1_FIRST, p2: int = _Code.P2_NO_CHAINCODE
-    ):
+    def __init__(self, ins: int, p1: int = _Code.P1_FIRST, p2: int = _Code.P2_NO_CHAINCODE):
         self.apdu = struct.pack(">BBBB", _Code.CLA, ins, p1, p2)
 
     def append(self, path: bytes, payload: bytes):
@@ -121,10 +119,7 @@ def _wrap_apdu(command: bytes) -> List[bytes]:
     packets = []
     header = struct.pack(">H", len(command))
     command = header + command
-    chunks = [
-        command[i : i + _PacketData.FREE]
-        for i in range(0, len(command), _PacketData.FREE)
-    ]
+    chunks = [command[i : i + _PacketData.FREE] for i in range(0, len(command), _PacketData.FREE)]
 
     # Create a packet for each command chunk
     for packet_id in range(len(chunks)):
@@ -138,9 +133,7 @@ def _wrap_apdu(command: bytes) -> List[bytes]:
 
 def _unwrap_apdu(
     packet: bytes,
-) -> Tuple[
-    Optional[int], Optional[bytes], Optional[int], Optional[int], Optional[bytes]
-]:
+) -> Tuple[Optional[int], Optional[bytes], Optional[int], Optional[int], Optional[bytes]]:
     """
     Given a packet from the device, extract and return relevant info
     """
@@ -333,9 +326,7 @@ class LedgerEthereumAccountClient:
         reply = self._client.exchange(builder.apdu)
         return _to_vrs(reply)
 
-    def sign_typed_data(
-        self, domain_hash: bytes, message_hash: bytes
-    ) -> Tuple[int, bytes, bytes]:
+    def sign_typed_data(self, domain_hash: bytes, message_hash: bytes) -> Tuple[int, bytes, bytes]:
         """
         Sign an Ethereum message following the EIP 712 specification.
 
@@ -368,9 +359,7 @@ class LedgerEthereumAccountClient:
         """
 
         payload = self.path_bytes + txn
-        chunks = [
-            payload[i : i + 255] for i in range(0, len(payload), 255)
-        ]  # noqa: E203
+        chunks = [payload[i : i + 255] for i in range(0, len(payload), 255)]  # noqa: E203
         apdu_param1 = _Code.P1_FIRST
         reply = None
 
@@ -381,9 +370,7 @@ class LedgerEthereumAccountClient:
             apdu_param1 = _Code.P1_MORE
 
         if not reply:
-            raise LedgerUsbError(
-                "Signing transaction failed - received 0 bytes in reply."
-            )
+            raise LedgerUsbError("Signing transaction failed - received 0 bytes in reply.")
 
         return _to_vrs(reply)
 

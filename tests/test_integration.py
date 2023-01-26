@@ -59,9 +59,7 @@ def test_list(runner, existing_account, cmd):
 
 def test_add(runner, mock_device_connection):
     selected_account_id = 0
-    result = runner.invoke(
-        cli, ["ledger", "add", TEST_ALIAS], input=str(selected_account_id)
-    )
+    result = runner.invoke(cli, ["ledger", "add", TEST_ALIAS], input=str(selected_account_id))
     assert result.exit_code == 0, result.output
     assert (
         f"SUCCESS: Account '{TEST_ADDRESS}' successfully added with alias '{TEST_ALIAS}'."

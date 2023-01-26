@@ -113,9 +113,7 @@ class LedgerAccount(AccountAPI):
         else:
             serializable_txn = DynamicFeeTransaction(**txn.dict())
             version_byte = bytes(HexBytes(TransactionType.DYNAMIC.value))
-            txn_bytes = version_byte + rlp.encode(
-                serializable_txn, DynamicFeeTransaction
-            )
+            txn_bytes = version_byte + rlp.encode(serializable_txn, DynamicFeeTransaction)
 
         _echo_object_to_sign(txn)
         v, r, s = self._client.sign_transaction(txn_bytes)
