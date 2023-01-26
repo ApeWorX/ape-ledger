@@ -4,8 +4,8 @@ from eth_typing import HexStr
 from eth_utils import add_0x_prefix, decode_hex
 from rlp import Serializable  # type: ignore
 from rlp.sedes import BigEndianInt, Binary, CountableList  # type: ignore
-from rlp.sedes import List as ListSedes  # type: ignore
-from rlp.sedes import big_endian_int, binary  # type: ignore
+from rlp.sedes import List as ListSedes
+from rlp.sedes import big_endian_int, binary
 
 """Inspired from https://github.com/mikeshultz/ledger-eth-lib"""
 

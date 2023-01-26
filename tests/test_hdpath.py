@@ -4,7 +4,9 @@ from ape_ledger.hdpath import HDAccountPath, HDBasePath, HDPath
 
 
 class TestHDPath:
-    include_subclasses = pytest.mark.parametrize("cls", (HDPath, HDBasePath, HDAccountPath))
+    include_subclasses = pytest.mark.parametrize(
+        "cls", (HDPath, HDBasePath, HDAccountPath)
+    )
 
     @include_subclasses
     def test_init_no_m_raises_value_errors(self, cls):

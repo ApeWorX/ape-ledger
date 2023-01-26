@@ -74,7 +74,9 @@ def runner():
     return CliRunner()
 
 
-def assert_account(account_path, expected_address=TEST_ADDRESS, expected_hdpath="m/44'/60'/0'/0/0"):
+def assert_account(
+    account_path, expected_address=TEST_ADDRESS, expected_hdpath="m/44'/60'/0'/0/0"
+):
     with open(account_path) as account_file:
         account_data = json.load(account_file)
         assert account_data["address"] == expected_address
