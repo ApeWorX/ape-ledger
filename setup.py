@@ -60,7 +60,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "click",  # Use same version as eth-ape
-        "eth-ape>=0.5.0,<0.7",
+        "eth-ape>=0.6.0,<0.7",
         "hidapi>=0.13.1,<0.14",
         "importlib-metadata",
         "rlp>=3.0.0",
