@@ -20,7 +20,7 @@ class AccountContainer(AccountContainerAPI):
     @property
     def accounts(self) -> Iterator[AccountAPI]:
         for account_file in self._account_files:
-            yield LedgerAccount(container=self, account_file_path=account_file)  # type: ignore
+            yield LedgerAccount(container=self, account_file_path=account_file)
 
     def __setitem__(self, address: AddressType, account: AccountAPI):
         raise NotImplementedError()
@@ -103,9 +103,9 @@ class LedgerAccount(AccountAPI):
             )
 
         v, r, s = signed_msg
-        return MessageSignature(v, r, s)  # type: ignore
+        return MessageSignature(v, r, s)
 
-    def sign_transaction(self, txn: TransactionAPI) -> Optional[TransactionSignature]:
+    def sign_transaction(self, txn: TransactionAPI, **kwargs) -> Optional[TransactionAPI]:
         txn_type = TransactionType(txn.type)  # In case it is not enum
         if txn_type == TransactionType.STATIC:
             serializable_txn = StaticFeeTransaction(**txn.dict())
@@ -124,4 +124,5 @@ class LedgerAccount(AccountAPI):
             ecc_parity = v - ((chain_id * 2 + 35) % 256)
             v = (chain_id * 2 + 35) + ecc_parity
 
-        return TransactionSignature(v, r, s)  # type: ignore
+        txn.signature = TransactionSignature(v, r, s)
+        return txn
