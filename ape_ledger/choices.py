@@ -70,7 +70,7 @@ class AddressPromptChoice(PromptChoice):
 
             address = self._get_user_selection()
 
-        account_id = self._choice_index
+        account_id = self._choice_index + self._index_offset
         return address, self._hd_root_path.get_account_path(account_id)
 
     def _get_user_selection(self) -> str:
