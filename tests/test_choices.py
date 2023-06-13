@@ -7,7 +7,8 @@ class TestAddressPromptChoice:
     def test_get_user_selected_account(self, mocker, mock_ethereum_app):
         mock_prompt = mocker.patch("ape_ledger.choices.click.prompt")
         choices = AddressPromptChoice(mock_ethereum_app)
-        choices._choice_index = 1
+        choices._choice_index = 3
+        choices._index_offset = 2
 
         # `None` means the user hasn't selected yeet
         # And is entering other keys, possible the paging keys.
@@ -19,4 +20,4 @@ class TestAddressPromptChoice:
         mock_prompt.side_effect = _side_effect
         address, hdpath = choices.get_user_selected_account()
         assert address == TEST_ADDRESS
-        assert str(hdpath) == "m/44'/60'/1'/0/0"
+        assert str(hdpath) == f"m/44'/60'/{choices._choice_index + choices._index_offset}'/0/0"
