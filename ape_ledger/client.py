@@ -217,8 +217,10 @@ class LedgerUsbDeviceClient:
         for packet in packets:
             self._device.write(packet)
 
-        reply = self._receive_reply()
-        return _handle_reply_status(reply)
+        if reply := self._receive_reply():
+            return _handle_reply_status(reply)
+
+        return b""
 
     def _receive_reply(self) -> bytes:
         """
@@ -228,7 +230,11 @@ class LedgerUsbDeviceClient:
         reply_min_size = 2
         reply_start = time.time()
         while True:
-            packet = bytes(self._device.read(64))
+            try:
+                packet = bytes(self._device.read(64))
+            except OSError:
+                return b""
+
             (channel, tag, index, size, data) = _unwrap_apdu(packet)
 
             channel = self._wait_for_channel(channel, reply_start)
