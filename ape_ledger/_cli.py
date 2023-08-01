@@ -5,6 +5,7 @@ from ape import accounts
 from ape.cli import (
     ape_cli_context,
     existing_alias_argument,
+    network_option,
     non_existing_alias_argument,
     skip_confirmation_option,
 )
@@ -111,9 +112,23 @@ def delete_all(cli_ctx, skip_confirmation):
 @ape_cli_context()
 @click.argument("alias")
 @click.argument("message", default="Hello World!")
-def sign_message(cli_ctx, alias, message):
+@network_option()
+def sign_message(cli_ctx, alias, message, network):
     """Sign a message using a Ledger account"""
 
+    ctx = None
+    if network:
+        ctx = cli_ctx.network_manager.parse_network_choice(network)
+        ctx.__enter__()
+
+    try:
+        _sign_message(cli_ctx, alias, message)
+    finally:
+        if network and ctx and ctx._provider and ctx._provider.is_connected:
+            ctx.__exit__()
+
+
+def _sign_message(cli_ctx, alias, message):
     if alias not in accounts.aliases:
         cli_ctx.abort(f"Account with alias '{alias}' does not exist.")
 

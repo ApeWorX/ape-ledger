@@ -2,11 +2,14 @@
 Implementation inspired from
 https://github.com/vegaswap/ledgertools/blob/master/ledger_usb.py
 """
+import atexit
 import struct
 import time
+from functools import cached_property
 from typing import List, Optional, Tuple
 
 import hid  # type: ignore
+from ape.logging import logger
 from eth_typing.evm import ChecksumAddress
 from eth_utils import to_checksum_address
 
@@ -165,16 +168,36 @@ def _get_hid_device_path() -> Optional[str]:
 
 def _get_device(hid_path: str) -> hid.device:
     device = hid.device()
+    retries = 5
+    times_tried = 0
 
-    try:
-        device.open_path(hid_path)
-    except OSError as err:
-        message = (
-            "Unable to open HID path. "
-            "Make sure you have your device unlocked via the passcode "
-            "and have the Ethereum app open."
-        )
-        raise LedgerUsbError(message) from err
+    for _ in range(retries):
+        try:
+            device.open_path(hid_path)
+
+        except RuntimeError as err:
+            if str(err).lower().strip() == "already open":
+                # Grab the connection. Noticed behavior on S device.
+                device.close()
+                device.open_path(hid_path)
+                device.set_nonblocking(True)
+                return device
+
+            else:
+                raise  # The runtime error
+
+        except OSError as err:
+            times_tried += 1
+            if times_tried == retries:
+                message = (
+                    f"Unable to open HID path ({err}). "
+                    "Make sure you have your device unlocked via the passcode "
+                    "and have the Ethereum app open."
+                )
+                raise LedgerUsbError(message) from err
+
+            else:
+                time.sleep(1)
 
     device.set_nonblocking(True)
     return device
@@ -212,15 +235,17 @@ class LedgerUsbDeviceClient:
     def __init__(self, hid_device):
         self._device = hid_device
 
+        # This will prevent issue of having to unplug and re-plug in device
+        # when failures occur.
+        atexit.register(self.close)
+
     def exchange(self, apdu: bytes) -> bytes:
-        packets = _wrap_apdu(apdu)
-        for packet in packets:
-            self._device.write(packet)
+        if apdu:
+            packets = _wrap_apdu(apdu)
+            for packet in packets:
+                self._device.write(packet)
 
-        if reply := self._receive_reply():
-            return _handle_reply_status(reply)
-
-        return b""
+        return _handle_reply_status(reply) if (reply := self._receive_reply()) else b""
 
     def _receive_reply(self) -> bytes:
         """
@@ -229,16 +254,29 @@ class LedgerUsbDeviceClient:
         reply: bytes = b""
         reply_min_size = 2
         reply_start = time.time()
+        read_timeout = 50
         while True:
             try:
                 packet = bytes(self._device.read(64))
             except OSError:
-                return b""
+                # If this happens, we are waiting for a signature.
+                read_timeout += 1
+                time.sleep(0.2)
+                continue
+
+            if not packet and not reply:
+                # waiting
+                read_timeout += 1
+                time.sleep(0.2)
+                continue
+
+            elif not packet and reply:
+                return reply
 
             (channel, tag, index, size, data) = _unwrap_apdu(packet)
 
             channel = self._wait_for_channel(channel, reply_start)
-            if not channel:
+            if not (channel := self._wait_for_channel(channel, reply_start)):
                 continue
 
             _verify_channel_and_tag(channel, tag)
@@ -253,16 +291,25 @@ class LedgerUsbDeviceClient:
                 reply = bytes(reply[:reply_min_size])
                 break
 
+            else:
+                return reply
+
         return reply
 
     def _wait_for_channel(self, channel, reply_start):
         if channel:
             return channel
 
-        if reply_start + self._exchange_timeout < time.time():
+        elif reply_start + self._exchange_timeout < time.time():
             raise LedgerTimeoutError(self._exchange_timeout)
 
         time.sleep(0.01)
+
+    def close(self):
+        if self._device:
+            logger.info("Closing Ledger device.")
+            self._device.close()
+            self._device = None
 
 
 def _to_vrs(reply: bytes) -> Tuple[int, bytes, bytes]:
@@ -367,18 +414,25 @@ class LedgerEthereumAccountClient:
         payload = self.path_bytes + txn
         chunks = [payload[i : i + 255] for i in range(0, len(payload), 255)]  # noqa: E203
         apdu_param1 = _Code.P1_FIRST
-        reply = None
+        reply = b""
 
         for chunk in chunks:
+            if not chunk:
+                break
+
             builder = APDUBuilder(_Code.INS_SIGN_TX, p1=apdu_param1)
             builder.append(b"", chunk)
-            reply = self._client.exchange(builder.apdu)
-            apdu_param1 = _Code.P1_MORE
+            if part := self._client.exchange(builder.apdu):
+                reply += part
+                apdu_param1 = _Code.P1_MORE
 
-        if not reply:
-            raise LedgerUsbError("Signing transaction failed - received 0 bytes in reply.")
+            else:
+                break
 
-        return _to_vrs(reply)
+        if reply:
+            return _to_vrs(reply)
+
+        raise LedgerUsbError("Signing transaction failed - received 0 bytes in reply.")
 
 
 class LedgerEthereumAppClient:
@@ -421,25 +475,20 @@ def connect_to_ethereum_app(hd_path: HDBasePath) -> LedgerEthereumAppClient:
 
 
 class DeviceManager:
-    _device: Optional[LedgerUsbDeviceClient] = None
     _client_cls = LedgerUsbDeviceClient
 
-    @property
+    @cached_property
     def device(self) -> LedgerUsbDeviceClient:
         """
         Create a Ledger device client and connect to it.
         """
-
-        if self._device:
-            return self._device
 
         hid_path = _get_hid_device_path()
         if hid_path is None:
             raise LedgerUsbError("No Ledger USB device found.")
 
         device = _get_device(hid_path)
-        self._device = self._client_cls(device)
-        return self._device
+        return self._client_cls(device)
 
 
 device_manager = DeviceManager()

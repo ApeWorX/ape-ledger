@@ -1,4 +1,5 @@
 import json
+from functools import cached_property
 from pathlib import Path
 from typing import Iterator, Optional, Union
 
@@ -11,7 +12,7 @@ from eth_account.messages import SignableMessage
 from hexbytes import HexBytes
 
 from ape_ledger.client import LedgerEthereumAccountClient, connect_to_ethereum_account
-from ape_ledger.exceptions import LedgerSigningError
+from ape_ledger.exceptions import LedgerSigningError, LedgerUsbError
 from ape_ledger.hdpath import HDAccountPath
 from ape_ledger.objects import DynamicFeeTransaction, StaticFeeTransaction
 
@@ -62,9 +63,6 @@ def _echo_object_to_sign(obj: Union[TransactionAPI, SignableMessage]):
 class LedgerAccount(AccountAPI):
     account_file_path: Path
 
-    # Optional because it's lazily loaded
-    account_client: Optional[LedgerEthereumAccountClient] = None
-
     @property
     def alias(self) -> str:
         return self.account_file_path.stem
@@ -83,11 +81,9 @@ class LedgerAccount(AccountAPI):
     def account_file(self) -> dict:
         return json.loads(self.account_file_path.read_text())
 
-    @property
+    @cached_property
     def _client(self) -> LedgerEthereumAccountClient:
-        if self.account_client is None:
-            self.account_client = connect_to_ethereum_account(self.address, self.hdpath)
-        return self.account_client
+        return connect_to_ethereum_account(self.address, self.hdpath)
 
     def sign_message(self, msg: SignableMessage) -> Optional[MessageSignature]:
         version = msg.version
@@ -116,13 +112,18 @@ class LedgerAccount(AccountAPI):
             txn_bytes = version_byte + rlp.encode(serializable_txn, DynamicFeeTransaction)
 
         _echo_object_to_sign(txn)
-        v, r, s = self._client.sign_transaction(txn_bytes)
+
+        try:
+            v, r, s = self._client.sign_transaction(txn_bytes)
+        except LedgerUsbError as err:
+            raise LedgerSigningError(f"Signing failed: {err}") from err
 
         chain_id = txn.chain_id
-        # NOTE: EIP-1559 transactions don't pack 'chain_id' with 'v'.
-        if txn_type != TransactionType.DYNAMIC and (chain_id * 2 + 35) + 1 > 255:
-            ecc_parity = v - ((chain_id * 2 + 35) % 256)
-            v = (chain_id * 2 + 35) + ecc_parity
+        if chain_id:
+            # NOTE: EIP-1559 transactions don't pack 'chain_id' with 'v'.
+            if txn_type != TransactionType.DYNAMIC and (chain_id * 2 + 35) + 1 > 255:
+                ecc_parity = v - ((chain_id * 2 + 35) % 256)
+                v = (chain_id * 2 + 35) + ecc_parity
 
         txn.signature = TransactionSignature(v, r, s)
         return txn
