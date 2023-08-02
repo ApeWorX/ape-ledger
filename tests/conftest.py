@@ -87,6 +87,7 @@ def mock_device(mocker, hd_path, account_addresses, msg_signature, tx_signature)
         lambda *args, **kwargs: account_addresses[args[0]] if args else account_addresses[0]
     )
     device.sign_message.side_effect = lambda *args, **kwargs: msg_signature
+    device.sign_typed_data.side_effect = lambda *args, **kwargs: msg_signature
     device.sign_transaction.side_effect = lambda *args, **kwargs: tx_signature
     return device
 

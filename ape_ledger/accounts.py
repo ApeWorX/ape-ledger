@@ -22,6 +22,8 @@ def _to_bytes(val):
         return to_bytes(hexstr=val)
     elif isinstance(val, str):
         return to_bytes(text=val)
+    elif isinstance(val, HexBytes):
+        return bytes(val)
     else:
         return to_bytes(val)
 
@@ -98,18 +100,18 @@ class LedgerAccount(AccountAPI):
         version = msg.version
         if version == b"E":
             _echo_object_to_sign(msg)
+            signed_msg = self._client.sign_message(msg.body)
         elif version == b"\x01":
             _echo_object_to_sign(msg)
+            header = _to_bytes(msg.header)
+            body = _to_bytes(msg.body)
+            signed_msg = self._client.sign_typed_data(header, body)
         else:
             raise LedgerSigningError(
                 f"Unsupported message-signing specification, (version={version!r})."
             )
 
-        try:
-            v, r, s = self._client.sign_message(msg.body)
-        except Exception as err:
-            raise LedgerSigningError(str(err)) from err
-
+        v, r, s = signed_msg
         return MessageSignature(v=v, r=HexBytes(r), s=HexBytes(s))
 
     def sign_transaction(self, txn: TransactionAPI, **kwargs) -> Optional[TransactionAPI]:
