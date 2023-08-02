@@ -14,7 +14,6 @@ from eth_account.messages import encode_defunct
 
 from ape_ledger.accounts import LedgerAccount
 from ape_ledger.choices import AddressPromptChoice
-from ape_ledger.client import connect_to_ethereum_app
 from ape_ledger.exceptions import LedgerSigningError
 from ape_ledger.hdpath import HDBasePath
 
@@ -67,8 +66,7 @@ def _get_ledger_accounts() -> List[LedgerAccount]:
 def add(cli_ctx, alias, hd_path):
     """Add an account from your Ledger hardware wallet"""
 
-    app = connect_to_ethereum_app(hd_path)
-    choices = AddressPromptChoice(app)
+    choices = AddressPromptChoice(hd_path)
     address, account_hd_path = choices.get_user_selected_account()
     container = accounts.containers.get("ledger")
     container.save_account(alias, address, str(account_hd_path))

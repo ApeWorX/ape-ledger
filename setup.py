@@ -61,9 +61,8 @@ setup(
     install_requires=[
         "click",  # Use same version as eth-ape
         "eth-ape>=0.6.0,<0.7",
-        "hidapi>=0.14.0,<0.15",
+        "ledgereth>=0.8.0,<0.9",
         "importlib-metadata",
-        "rlp>=3.0.0",
         # EF Dependencies
         "eth-account",  # Use same version as eth-ape
         "eth-typing",  # Influenced by eth-ape

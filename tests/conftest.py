@@ -3,14 +3,7 @@ import json
 import pytest
 from ape.api.accounts import AccountContainerAPI
 from click.testing import CliRunner
-from eth_typing import ChecksumAddress, HexAddress, HexStr
-
-from ape_ledger.client import (
-    LedgerEthereumAccountClient,
-    LedgerEthereumAppClient,
-    LedgerUsbDeviceClient,
-)
-from ape_ledger.hdpath import HDAccountPath, HDBasePath
+from eth_typing import HexAddress, HexStr
 
 TEST_ADDRESSES = [
     HexAddress(HexStr("0x0A78AAAAA2122100000b9046f0A085AB2E111113")),
@@ -32,36 +25,6 @@ TEST_HD_PATH = "m/44'/60'/0'/0/0"
 @pytest.fixture
 def mock_apdu(mocker):
     return mocker.MagicMock()
-
-
-@pytest.fixture
-def mock_device(mocker):
-    return mocker.MagicMock(spec=LedgerUsbDeviceClient)
-
-
-def create_test_account(mock_device, address=TEST_ADDRESS):
-    address = ChecksumAddress(address)
-    path = HDAccountPath(TEST_HD_PATH)
-    return LedgerEthereumAccountClient(mock_device, address, path)
-
-
-@pytest.fixture
-def ledger_account(mock_device):
-    return create_test_account(mock_device)
-
-
-@pytest.fixture
-def mock_ethereum_app(mocker, mock_device):
-    mock = mocker.MagicMock(spec=LedgerEthereumAppClient)
-    mock.hd_root_path = HDBasePath()
-
-    def _get_address(account_id: int):
-        if len(TEST_ADDRESSES) > account_id >= 0:
-            address = TEST_ADDRESSES[account_id]
-            return create_test_account(mock_device, address=address)
-
-    mock.load_account.side_effect = _get_address
-    return mock
 
 
 @pytest.fixture

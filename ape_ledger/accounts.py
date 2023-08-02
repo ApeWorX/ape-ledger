@@ -1,20 +1,29 @@
 import json
-from functools import cached_property
 from pathlib import Path
-from typing import Iterator, Optional, Union
+from typing import Dict, Iterator, Optional, Union
 
 import click
-import rlp  # type: ignore
 from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI
 from ape.types import AddressType, MessageSignature, TransactionSignature
-from ape_ethereum.transactions import TransactionType
+from ape_ethereum.transactions import DynamicFeeTransaction, StaticFeeTransaction
 from eth_account.messages import SignableMessage
+from eth_utils import is_0x_prefixed, to_bytes
 from hexbytes import HexBytes
 
-from ape_ledger.client import LedgerEthereumAccountClient, connect_to_ethereum_account
-from ape_ledger.exceptions import LedgerSigningError, LedgerUsbError
+from ape_ledger.device import get_device
+from ape_ledger.exceptions import LedgerSigningError
 from ape_ledger.hdpath import HDAccountPath
-from ape_ledger.objects import DynamicFeeTransaction, StaticFeeTransaction
+
+
+def _to_bytes(val):
+    if val is None:
+        return b""
+    elif isinstance(val, str) and is_0x_prefixed(val):
+        return to_bytes(hexstr=val)
+    elif isinstance(val, str):
+        return to_bytes(text=val)
+    else:
+        return to_bytes(val)
 
 
 class AccountContainer(AccountContainerAPI):
@@ -81,49 +90,53 @@ class LedgerAccount(AccountAPI):
     def account_file(self) -> dict:
         return json.loads(self.account_file_path.read_text())
 
-    @cached_property
-    def _client(self) -> LedgerEthereumAccountClient:
-        return connect_to_ethereum_account(self.address, self.hdpath)
-
     def sign_message(self, msg: SignableMessage) -> Optional[MessageSignature]:
         version = msg.version
         if version == b"E":
             _echo_object_to_sign(msg)
-            signed_msg = self._client.sign_personal_message(msg.body)
         elif version == b"\x01":
             _echo_object_to_sign(msg)
-            signed_msg = self._client.sign_typed_data(msg.header, msg.body)
         else:
             raise LedgerSigningError(
                 f"Unsupported message-signing specification, (version={version!r})."
             )
 
-        v, r, s = signed_msg
-        return MessageSignature(v, r, s)
-
-    def sign_transaction(self, txn: TransactionAPI, **kwargs) -> Optional[TransactionAPI]:
-        txn_type = TransactionType(txn.type)  # In case it is not enum
-        if txn_type == TransactionType.STATIC:
-            serializable_txn = StaticFeeTransaction(**txn.dict())
-            txn_bytes = rlp.encode(serializable_txn, StaticFeeTransaction)
-        else:
-            serializable_txn = DynamicFeeTransaction(**txn.dict())
-            version_byte = bytes(HexBytes(TransactionType.DYNAMIC.value))
-            txn_bytes = version_byte + rlp.encode(serializable_txn, DynamicFeeTransaction)
-
-        _echo_object_to_sign(txn)
+        device = get_device(self.hdpath)
 
         try:
-            v, r, s = self._client.sign_transaction(txn_bytes)
-        except LedgerUsbError as err:
-            raise LedgerSigningError(f"Signing failed: {err}") from err
+            v, r, s = device.sign_message(msg.body)
+        except Exception as err:
+            raise LedgerSigningError(str(err)) from err
 
-        chain_id = txn.chain_id
-        if chain_id:
-            # NOTE: EIP-1559 transactions don't pack 'chain_id' with 'v'.
-            if txn_type != TransactionType.DYNAMIC and (chain_id * 2 + 35) + 1 > 255:
-                ecc_parity = v - ((chain_id * 2 + 35) % 256)
-                v = (chain_id * 2 + 35) + ecc_parity
+        return MessageSignature(v=v, r=HexBytes(r), s=HexBytes(s))
 
-        txn.signature = TransactionSignature(v, r, s)
+    def sign_transaction(self, txn: TransactionAPI, **kwargs) -> Optional[TransactionAPI]:
+        txn_dict: Dict = {
+            "nonce": txn.nonce,
+            "gas": txn.gas_limit,
+            "amount": txn.value,
+            "data": _to_bytes(txn.data.hex()),
+            "destination": _to_bytes(txn.receiver),
+            "chain_id": txn.chain_id,
+        }
+        if isinstance(txn, StaticFeeTransaction):
+            txn_dict["gas_price"] = txn.gas_price
+
+        elif isinstance(txn, DynamicFeeTransaction):
+            txn_dict["max_fee_per_gas"] = txn.max_fee
+            txn_dict["max_priority_fee_per_gas"] = txn.max_priority_fee
+            if txn.access_list:
+                txn_dict["access_list"] = [[ls.address, ls.storage_keys] for ls in txn.access_list]
+
+        else:
+            raise TypeError(type(txn))
+
+        device = get_device(self.hdpath)
+
+        v, r, s = device.sign_transaction(txn_dict)
+        txn.signature = TransactionSignature(
+            v=v,
+            r=HexBytes(r),
+            s=HexBytes(s),
+        )
         return txn
