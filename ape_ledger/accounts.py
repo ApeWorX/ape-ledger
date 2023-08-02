@@ -10,7 +10,7 @@ from eth_account.messages import SignableMessage
 from eth_utils import is_0x_prefixed, to_bytes
 from hexbytes import HexBytes
 
-from ape_ledger.device import get_device
+from ape_ledger.client import LedgerDeviceClient, get_device
 from ape_ledger.exceptions import LedgerSigningError
 from ape_ledger.hdpath import HDAccountPath
 
@@ -77,6 +77,10 @@ class LedgerAccount(AccountAPI):
         return self.account_file_path.stem
 
     @property
+    def _client(self) -> LedgerDeviceClient:
+        return get_device(self.hdpath)
+
+    @property
     def address(self) -> AddressType:
         ecosystem = self.network_manager.get_ecosystem("ethereum")
         return ecosystem.decode_address(self.account_file["address"])
@@ -101,16 +105,15 @@ class LedgerAccount(AccountAPI):
                 f"Unsupported message-signing specification, (version={version!r})."
             )
 
-        device = get_device(self.hdpath)
-
         try:
-            v, r, s = device.sign_message(msg.body)
+            v, r, s = self._client.sign_message(msg.body)
         except Exception as err:
             raise LedgerSigningError(str(err)) from err
 
         return MessageSignature(v=v, r=HexBytes(r), s=HexBytes(s))
 
     def sign_transaction(self, txn: TransactionAPI, **kwargs) -> Optional[TransactionAPI]:
+        txn.chain_id = 1
         txn_dict: Dict = {
             "nonce": txn.nonce,
             "gas": txn.gas_limit,
@@ -131,9 +134,7 @@ class LedgerAccount(AccountAPI):
         else:
             raise TypeError(type(txn))
 
-        device = get_device(self.hdpath)
-
-        v, r, s = device.sign_transaction(txn_dict)
+        v, r, s = self._client.sign_transaction(txn_dict)
         txn.signature = TransactionSignature(
             v=v,
             r=HexBytes(r),

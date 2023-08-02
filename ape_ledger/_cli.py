@@ -36,7 +36,7 @@ def _list(cli_ctx):
         cli_ctx.logger.warning("No accounts found.")
         return
 
-    num_accounts = len(accounts)
+    num_accounts = len(ledger_accounts)
     header = f"Found {num_accounts} account"
     header += "s:" if num_accounts > 1 else ":"
     click.echo(header)

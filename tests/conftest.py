@@ -1,30 +1,90 @@
 import json
 
 import pytest
+from ape import accounts, networks
 from ape.api.accounts import AccountContainerAPI
 from click.testing import CliRunner
-from eth_typing import HexAddress, HexStr
+from eth_account.messages import encode_defunct
+from ethpm_types import HexBytes
 
-TEST_ADDRESSES = [
-    HexAddress(HexStr("0x0A78AAAAA2122100000b9046f0A085AB2E111113")),
-    HexAddress(HexStr("0x1A78AAAAA2122100000b9046f0A085AB2E111113")),
-    HexAddress(HexStr("0x2A78AAAAA2122100000b9046f0A085AB2E111113")),
-    HexAddress(HexStr("0x3A78AAAAA2122100000b9046f0A085AB2E111113")),
-    HexAddress(HexStr("0x4A78AAAAA2122100000b9046f0A085AB2E111113")),
-    HexAddress(HexStr("0x5A78AAAAA2122100000b9046f0A085AB2E111113")),
-    HexAddress(HexStr("0x6A78AAAAA2122100000b9046f0A085AB2E111113")),
-    HexAddress(HexStr("0x7A78AAAAA2122100000b9046f0A085AB2E111113")),
-    HexAddress(HexStr("0x8A78AAAAA2122100000b9046f0A085AB2E111113")),
-    HexAddress(HexStr("0x9A78AAAAA2122100000b9046f0A085AB2E111113")),
-]
-TEST_ADDRESS = TEST_ADDRESSES[0]
+from ape_ledger.client import LedgerDeviceClient
+
 TEST_ALIAS = "TestAlias"
 TEST_HD_PATH = "m/44'/60'/0'/0/0"
 
 
 @pytest.fixture
-def mock_apdu(mocker):
-    return mocker.MagicMock()
+def hd_path():
+    return TEST_HD_PATH
+
+
+@pytest.fixture
+def alias():
+    return TEST_ALIAS
+
+
+@pytest.fixture
+def test_accounts():
+    return accounts.test_accounts
+
+
+@pytest.fixture
+def account_addresses(test_accounts):
+    return [a.address for a in test_accounts]
+
+
+@pytest.fixture
+def account_0(test_accounts):
+    return test_accounts[0]
+
+
+@pytest.fixture
+def account_1(test_accounts):
+    return test_accounts[0]
+
+
+@pytest.fixture
+def address(account_addresses):
+    return account_addresses[0]
+
+
+@pytest.fixture(autouse=True)
+def connection():
+    with networks.ethereum.local.use_provider("test") as provider:
+        yield provider
+
+
+@pytest.fixture
+def msg_signature(account_0):
+    msg = encode_defunct(text="__TEST_MESSAGE__")
+    sig = account_0.sign_message(msg)
+    return (
+        sig.v,
+        int(HexBytes(sig.r).hex(), 16),
+        int(HexBytes(sig.s).hex(), 16),
+    )
+
+
+@pytest.fixture
+def tx_signature(account_0, account_1):
+    txn = account_0.transfer(account_1, "1 gwei")
+    return (
+        txn.signature.v,
+        int(HexBytes(txn.signature.r).hex(), 16),
+        int(HexBytes(txn.signature.s).hex(), 16),
+    )
+
+
+@pytest.fixture(autouse=True)
+def mock_device(mocker, hd_path, account_addresses, msg_signature, tx_signature):
+    device = mocker.MagicMock(spec=LedgerDeviceClient)
+    patch = mocker.patch("ape_ledger.client.get_device")
+    patch.return_value = device
+    device._account = hd_path
+    device.get_address.side_effect = lambda a: account_addresses[a]
+    device.sign_message.side_effect = lambda *args, **kwargs: msg_signature
+    device.sign_transaction.side_effect = lambda *args, **kwargs: tx_signature
+    return device
 
 
 @pytest.fixture
@@ -37,8 +97,13 @@ def runner():
     return CliRunner()
 
 
-def assert_account(account_path, expected_address=TEST_ADDRESS, expected_hdpath="m/44'/60'/0'/0/0"):
-    with open(account_path) as account_file:
-        account_data = json.load(account_file)
-        assert account_data["address"] == expected_address
-        assert account_data["hdpath"] == expected_hdpath
+@pytest.fixture
+def assert_account(address):
+    def fn(account_path, expected_address=None, expected_hdpath="m/44'/60'/0'/0/0"):
+        expected_address = expected_address or address
+        with open(account_path) as account_file:
+            account_data = json.load(account_file)
+            assert account_data["address"] == expected_address
+            assert account_data["hdpath"] == expected_hdpath
+
+    return fn

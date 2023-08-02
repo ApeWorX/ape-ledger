@@ -4,7 +4,7 @@ import click
 from ape.cli import PromptChoice
 from click import Context, Parameter
 
-from ape_ledger.device import get_device
+from ape_ledger.client import get_device
 from ape_ledger.hdpath import HDAccountPath, HDBasePath
 
 
