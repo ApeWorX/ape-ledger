@@ -11,7 +11,12 @@ def _get_container():
 
 @pytest.fixture
 def alias():
-    return "__integration_test_alias__"
+    val = "__integration_test_alias__"
+    container = _get_container()
+    if val in [a.alias for a in container.accounts]:
+        container.delete_account(val)
+
+    return val
 
 
 @pytest.fixture
@@ -37,6 +42,19 @@ def clean_after(runner):
         _clean_up(runner)
 
 
+@pytest.fixture
+def choices(mocker):
+    def fn(addr, account_id):
+        patch = mocker.patch("ape_ledger._cli._select_account")
+
+        def se(hd_path):
+            return addr, HDBasePath(hd_path).get_account_path(account_id)
+
+        patch.side_effect = se
+
+    return fn
+
+
 def _clean_up(runner):
     runner.invoke(cli, ["ledger", "delete", alias], input="y")
 
@@ -47,47 +65,48 @@ def _get_account_path(alias=alias):
 
 
 @pytest.mark.parametrize("cmd", (["ledger", "list"], ["accounts", "list", "--all"]))
-def test_list(runner, existing_account, cmd, address):
+def test_list(runner, existing_account, cmd, address, alias):
     result = runner.invoke(cli, cmd)
     assert result.exit_code == 0, result.output
     assert alias in result.output
     assert address.lower() in result.output.lower()
 
 
-def test_add(runner, mock_device_connection, assert_account, address, alias):
-    selected_account_id = 0
-    result = runner.invoke(cli, ["ledger", "add", alias], input=str(selected_account_id))
+def test_add(runner, assert_account, address, alias, choices, hd_path):
+    container = _get_container()
+    choices(address, 2)
+    result = runner.invoke(cli, ["ledger", "add", alias])
     assert result.exit_code == 0, result.output
     assert f"SUCCESS: Account '{address}' successfully added with alias '{alias}'." in result.output
 
-    container = _get_container()
     expected_path = container.data_folder.joinpath(f"{alias}.json")
-    expected_hd_path = f"m/44'/60'/{selected_account_id}'/0/0"
+    expected_hd_path = "m/44'/60'/2'/0/0"
     assert_account(expected_path, expected_hdpath=expected_hd_path)
 
 
-def test_add_when_hd_path_specified(
-    runner, mock_ethereum_app, mock_device_connection, alias, address, hd_path, assert_account
-):
+def test_add_when_hd_path_specified(runner, alias, address, hd_path, assert_account, choices):
     test_hd_path = "m/44'/60'/0'"
-    mock_ethereum_app.hd_root_path = HDBasePath(test_hd_path)
-
-    selected_account_id = 0
+    container = _get_container()
+    choices(address, 2)
     result = runner.invoke(
         cli,
         ["ledger", "add", alias, "--hd-path", test_hd_path],
-        input=str(selected_account_id),
     )
     assert result.exit_code == 0, result.output
     assert f"SUCCESS: Account '{address}' successfully added with alias '{alias}'." in result.output
 
-    expected_path = hd_path
-    expected_hd_path = f"m/44'/60'/0'/{selected_account_id}"
+    expected_path = container.data_folder.joinpath(f"{alias}.json")
+    expected_hd_path = "m/44'/60'/0'/2"
     assert_account(expected_path, expected_hdpath=expected_hd_path)
 
 
-def test_add_alias_already_exists(runner, mock_device_connection, existing_account):
-    result = runner.invoke(cli, ["ledger", "add", alias], input="0")
+def test_add_alias_already_exists(runner, existing_account, choices, address, alias):
+    choices(address, 2)
+
+    # Ensure exists
+    runner.invoke(cli, ["ledger", "add", alias])
+
+    result = runner.invoke(cli, ["ledger", "add", alias])
     assert result.exit_code == 1, result.output
     assert (
         f"ERROR: (AliasAlreadyInUseError) Account with alias '{alias}' already in use."

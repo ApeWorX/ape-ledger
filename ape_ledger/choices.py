@@ -1,4 +1,4 @@
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Union
 
 import click
 from ape.cli import PromptChoice
@@ -17,10 +17,13 @@ class AddressPromptChoice(PromptChoice):
 
     def __init__(
         self,
-        hd_path: HDBasePath,
+        hd_path: Union[HDBasePath, str],
         index_offset: int = 0,
         page_size: int = DEFAULT_PAGE_SIZE,
     ):
+        if isinstance(hd_path, str):
+            hd_path = HDBasePath(base_path=hd_path)
+
         self._hd_root_path = hd_path
         self._index_offset = index_offset
         self._page_size = page_size
@@ -99,4 +102,4 @@ class AddressPromptChoice(PromptChoice):
         return device.get_address()
 
 
-__all__ = ["AddressPromptChoice", "PromptChoice"]
+__all__ = ["AddressPromptChoice"]

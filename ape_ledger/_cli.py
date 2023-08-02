@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Union
 
 import click
 from ape import accounts
@@ -15,7 +15,12 @@ from eth_account.messages import encode_defunct
 from ape_ledger.accounts import LedgerAccount
 from ape_ledger.choices import AddressPromptChoice
 from ape_ledger.exceptions import LedgerSigningError
-from ape_ledger.hdpath import HDBasePath
+from ape_ledger.hdpath import HDAccountPath, HDBasePath
+
+
+def _select_account(hd_path: Union[HDBasePath, str]) -> Tuple[str, HDAccountPath]:
+    choices = AddressPromptChoice(hd_path)
+    return choices.get_user_selected_account()
 
 
 @click.group(short_help="Manage Ledger accounts")
@@ -66,8 +71,7 @@ def _get_ledger_accounts() -> List[LedgerAccount]:
 def add(cli_ctx, alias, hd_path):
     """Add an account from your Ledger hardware wallet"""
 
-    choices = AddressPromptChoice(hd_path)
-    address, account_hd_path = choices.get_user_selected_account()
+    address, account_hd_path = _select_account(hd_path)
     container = accounts.containers.get("ledger")
     container.save_account(alias, address, str(account_hd_path))
     cli_ctx.logger.success(f"Account '{address}' successfully added with alias '{alias}'.")

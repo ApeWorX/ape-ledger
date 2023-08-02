@@ -6,7 +6,7 @@ import hid  # type: ignore
 from ape.logging import LogLevel, logger
 from ledgerblue.comm import HIDDongleHIDAPI, getDongle  # type: ignore
 from ledgereth.accounts import get_account_by_path
-from ledgereth.messages import sign_message
+from ledgereth.messages import sign_message, sign_typed_data_draft
 from ledgereth.transactions import SignedType2Transaction, create_transaction
 
 from ape_ledger.hdpath import HDAccountPath
@@ -57,7 +57,13 @@ class LedgerDeviceClient:
         return get_account_by_path(self._account, dongle=self.dongle).address
 
     def sign_message(self, text: bytes) -> Tuple[int, int, int]:
-        signed_msg = sign_message(text, sender_path=self._account)
+        signed_msg = sign_message(text, sender_path=self._account, dongle=self.dongle)
+        return signed_msg.v, signed_msg.r, signed_msg.s
+
+    def sign_typed_data(self, domain_hash: bytes, message_hash: bytes) -> Tuple[int, int, int]:
+        signed_msg = sign_typed_data_draft(
+            domain_hash, message_hash, sender_path=self._account, dongle=self.dongle
+        )
         return signed_msg.v, signed_msg.r, signed_msg.s
 
     def sign_transaction(self, txn: Dict) -> Tuple[int, int, int]:

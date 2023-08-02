@@ -10,7 +10,7 @@ from ethpm_types import HexBytes
 from ape_ledger.client import LedgerDeviceClient
 
 TEST_ALIAS = "TestAlias"
-TEST_HD_PATH = "m/44'/60'/0'/0/0"
+TEST_HD_PATH = "m/44'/60'/{x}'/0/0"
 
 
 @pytest.fixture
@@ -66,22 +66,26 @@ def msg_signature(account_0):
 
 
 @pytest.fixture
-def tx_signature(account_0, account_1):
-    txn = account_0.transfer(account_1, "1 gwei")
+def receipt(account_0, account_1):
+    return account_0.transfer(account_1, "1 gwei")
+
+
+@pytest.fixture
+def tx_signature(receipt):
     return (
-        txn.signature.v,
-        int(HexBytes(txn.signature.r).hex(), 16),
-        int(HexBytes(txn.signature.s).hex(), 16),
+        receipt.signature.v,
+        int(HexBytes(receipt.signature.r).hex(), 16),
+        int(HexBytes(receipt.signature.s).hex(), 16),
     )
 
 
 @pytest.fixture(autouse=True)
 def mock_device(mocker, hd_path, account_addresses, msg_signature, tx_signature):
     device = mocker.MagicMock(spec=LedgerDeviceClient)
-    patch = mocker.patch("ape_ledger.client.get_device")
-    patch.return_value = device
     device._account = hd_path
-    device.get_address.side_effect = lambda a: account_addresses[a]
+    device.get_address.side_effect = (
+        lambda *args, **kwargs: account_addresses[args[0]] if args else account_addresses[0]
+    )
     device.sign_message.side_effect = lambda *args, **kwargs: msg_signature
     device.sign_transaction.side_effect = lambda *args, **kwargs: tx_signature
     return device
@@ -105,5 +109,14 @@ def assert_account(address):
             account_data = json.load(account_file)
             assert account_data["address"] == expected_address
             assert account_data["hdpath"] == expected_hdpath
+
+    return fn
+
+
+@pytest.fixture
+def device_factory(mocker, mock_device):
+    def fn(module):
+        patch = mocker.patch(f"ape_ledger.{module}.get_device")
+        patch.return_value = mock_device
 
     return fn

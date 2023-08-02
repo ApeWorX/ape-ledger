@@ -134,6 +134,7 @@ class LedgerAccount(AccountAPI):
         else:
             raise TypeError(type(txn))
 
+        _echo_object_to_sign(txn)
         v, r, s = self._client.sign_transaction(txn_dict)
         txn.signature = TransactionSignature(
             v=v,
