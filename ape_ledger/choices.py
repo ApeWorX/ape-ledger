@@ -1,10 +1,10 @@
-from typing import Any, Optional, Tuple
+from typing import Any, Optional, Tuple, Union
 
 import click
 from ape.cli import PromptChoice
 from click import Context, Parameter
 
-from ape_ledger.client import LedgerEthereumAppClient
+from ape_ledger.client import get_device
 from ape_ledger.hdpath import HDAccountPath, HDBasePath
 
 
@@ -17,22 +17,20 @@ class AddressPromptChoice(PromptChoice):
 
     def __init__(
         self,
-        app: LedgerEthereumAppClient,
+        hd_path: Union[HDBasePath, str],
         index_offset: int = 0,
         page_size: int = DEFAULT_PAGE_SIZE,
     ):
-        self._app = app
+        if isinstance(hd_path, str):
+            hd_path = HDBasePath(base_path=hd_path)
+
+        self._hd_root_path = hd_path
         self._index_offset = index_offset
         self._page_size = page_size
         self._choice_index = None
 
         # Must call ``_load_choices()`` to set address choices
         super().__init__([])
-
-    @property
-    def _hd_root_path(self) -> HDBasePath:
-        """The base HD path of the Ethereum wallet."""
-        return self._app.hd_root_path
 
     @property
     def _is_incremented(self) -> bool:
@@ -99,7 +97,9 @@ class AddressPromptChoice(PromptChoice):
         self.choices = [self._get_address(i) for i in index_range]
 
     def _get_address(self, account_id: int) -> str:
-        return str(self._app.load_account(account_id))
+        path = self._hd_root_path.get_account_path(account_id)
+        device = get_device(path)
+        return device.get_address()
 
 
-__all__ = ["AddressPromptChoice", "PromptChoice"]
+__all__ = ["AddressPromptChoice"]

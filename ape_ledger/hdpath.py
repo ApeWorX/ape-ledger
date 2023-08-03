@@ -1,4 +1,5 @@
 import struct
+from typing import Optional, Union
 
 
 class HDPath:
@@ -8,12 +9,18 @@ class HDPath:
     as well as the derivation HD path class :class:`~ape_ledger.hdpath.HDBasePath`.
     """
 
-    def __init__(self, path: str):
-        path = path.rstrip("/")
-        if not path.startswith("m/"):
+    def __init__(self, path: Union[str, "HDBasePath"]):
+        if not isinstance(path, str) and hasattr(path, "path"):
+            # NOTE: Using getattr for mypy
+            path_str = getattr(path, "path")
+        else:
+            path_str = path
+
+        path_str = path_str.rstrip("/")
+        if not path_str.startswith("m/"):
             raise ValueError("HD path must begin with m/")
 
-        self.path = path
+        self.path = path_str
 
     def __str__(self):
         return self.path
@@ -64,11 +71,16 @@ class HDBasePath(HDPath):
     :class:`~ape_ledger.hdpath.HDAccountPath`.
     """
 
-    def __init__(self, base_path=None):
+    def __init__(self, base_path: Optional[Union[str, "HDBasePath"]] = None):
         base_path = base_path or "m/44'/60'/{x}'/0/0"
-        base_path = base_path.rstrip("/")
-        base_path = base_path if "{x}" in base_path else f"{base_path}/{{x}}"
-        super().__init__(base_path)
+        if not isinstance(base_path, str) and hasattr(base_path, "path"):
+            base_path_str = base_path.path
+        else:
+            base_path_str = base_path
+
+        base_path_str = base_path_str.rstrip("/")
+        base_path_str = base_path_str if "{x}" in base_path_str else f"{base_path_str}/{{x}}"
+        super().__init__(base_path_str)
 
     def get_account_path(self, account_id) -> HDAccountPath:
         return HDAccountPath(self.path.format(x=str(account_id)))

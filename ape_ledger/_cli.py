@@ -1,10 +1,11 @@
-from typing import List
+from typing import List, Tuple, Union
 
 import click
 from ape import accounts
 from ape.cli import (
     ape_cli_context,
     existing_alias_argument,
+    network_option,
     non_existing_alias_argument,
     skip_confirmation_option,
 )
@@ -13,9 +14,13 @@ from eth_account.messages import encode_defunct
 
 from ape_ledger.accounts import LedgerAccount
 from ape_ledger.choices import AddressPromptChoice
-from ape_ledger.client import connect_to_ethereum_app
 from ape_ledger.exceptions import LedgerSigningError
-from ape_ledger.hdpath import HDBasePath
+from ape_ledger.hdpath import HDAccountPath, HDBasePath
+
+
+def _select_account(hd_path: Union[HDBasePath, str]) -> Tuple[str, HDAccountPath]:
+    choices = AddressPromptChoice(hd_path)
+    return choices.get_user_selected_account()
 
 
 @click.group(short_help="Manage Ledger accounts")
@@ -36,7 +41,7 @@ def _list(cli_ctx):
         cli_ctx.logger.warning("No accounts found.")
         return
 
-    num_accounts = len(accounts)
+    num_accounts = len(ledger_accounts)
     header = f"Found {num_accounts} account"
     header += "s:" if num_accounts > 1 else ":"
     click.echo(header)
@@ -66,9 +71,7 @@ def _get_ledger_accounts() -> List[LedgerAccount]:
 def add(cli_ctx, alias, hd_path):
     """Add an account from your Ledger hardware wallet"""
 
-    app = connect_to_ethereum_app(hd_path)
-    choices = AddressPromptChoice(app)
-    address, account_hd_path = choices.get_user_selected_account()
+    address, account_hd_path = _select_account(hd_path)
     container = accounts.containers.get("ledger")
     container.save_account(alias, address, str(account_hd_path))
     cli_ctx.logger.success(f"Account '{address}' successfully added with alias '{alias}'.")
@@ -111,9 +114,23 @@ def delete_all(cli_ctx, skip_confirmation):
 @ape_cli_context()
 @click.argument("alias")
 @click.argument("message", default="Hello World!")
-def sign_message(cli_ctx, alias, message):
+@network_option()
+def sign_message(cli_ctx, alias, message, network):
     """Sign a message using a Ledger account"""
 
+    ctx = None
+    if network:
+        ctx = cli_ctx.network_manager.parse_network_choice(network)
+        ctx.__enter__()
+
+    try:
+        _sign_message(cli_ctx, alias, message)
+    finally:
+        if network and ctx and ctx._provider and ctx._provider.is_connected:
+            ctx.__exit__()
+
+
+def _sign_message(cli_ctx, alias, message):
     if alias not in accounts.aliases:
         cli_ctx.abort(f"Account with alias '{alias}' does not exist.")
 
