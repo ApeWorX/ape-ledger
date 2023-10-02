@@ -72,7 +72,7 @@ def add(cli_ctx, alias, hd_path):
     """Add an account from your Ledger hardware wallet"""
 
     address, account_hd_path = _select_account(hd_path)
-    container = accounts.containers.get("ledger")
+    container = accounts.containers["ledger"]
     container.save_account(alias, address, str(account_hd_path))
     cli_ctx.logger.success(f"Account '{address}' successfully added with alias '{alias}'.")
 
@@ -83,7 +83,7 @@ def add(cli_ctx, alias, hd_path):
 def delete(cli_ctx, alias):
     """Remove a Ledger account from ape"""
 
-    container = accounts.containers.get("ledger")
+    container = accounts.containers["ledger"]
     container.delete_account(alias)
     cli_ctx.logger.success(f"Account '{alias}' has been removed.")
 
@@ -94,7 +94,7 @@ def delete(cli_ctx, alias):
 def delete_all(cli_ctx, skip_confirmation):
     """Remove all Ledger accounts from ape"""
 
-    container = accounts.containers.get("ledger")
+    container = accounts.containers["ledger"]
     ledger_accounts = _get_ledger_accounts()
     if len(ledger_accounts) == 0:
         cli_ctx.logger.warning("No accounts found.")

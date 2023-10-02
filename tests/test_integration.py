@@ -77,7 +77,7 @@ def test_add(runner, assert_account, address, alias, choices, hd_path):
     choices(address, 2)
     result = runner.invoke(cli, ["ledger", "add", alias])
     assert result.exit_code == 0, result.output
-    assert f"SUCCESS: Account '{address}' successfully added with alias '{alias}'." in result.output
+    assert f"Account '{address}' successfully added with alias '{alias}'." in result.output
 
     expected_path = container.data_folder.joinpath(f"{alias}.json")
     expected_hd_path = "m/44'/60'/2'/0/0"
@@ -93,7 +93,7 @@ def test_add_when_hd_path_specified(runner, alias, address, hd_path, assert_acco
         ["ledger", "add", alias, "--hd-path", test_hd_path],
     )
     assert result.exit_code == 0, result.output
-    assert f"SUCCESS: Account '{address}' successfully added with alias '{alias}'." in result.output
+    assert f"Account '{address}' successfully added with alias '{alias}'." in result.output
 
     expected_path = container.data_folder.joinpath(f"{alias}.json")
     expected_hd_path = "m/44'/60'/0'/2"
@@ -117,10 +117,11 @@ def test_add_alias_already_exists(runner, existing_account, choices, address, al
 def test_delete(runner, existing_account, alias):
     result = runner.invoke(cli, ["ledger", "delete", alias])
     assert result.exit_code == 0, result.output
-    assert f"SUCCESS: Account '{alias}' has been removed" in result.output
+    assert f"Account '{alias}' has been removed" in result.output
 
 
 def test_delete_account_not_exists(runner, alias):
-    result = runner.invoke(cli, ["ledger", "delete", alias])
+    not_alias = f"{alias}TYPO"
+    result = runner.invoke(cli, ["ledger", "delete", not_alias])
     assert result.exit_code == 2
-    assert f"'{alias}' is not one of" in result.output
+    assert f"'{not_alias}'" in result.output
