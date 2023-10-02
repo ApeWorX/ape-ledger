@@ -62,9 +62,7 @@ class AccountContainer(AccountContainerAPI):
 
     def delete_account(self, alias: str):
         path = self.data_folder.joinpath(f"{alias}.json")
-
-        if path.exists():
-            path.unlink()
+        path.unlink(missing_ok=True)
 
 
 def _echo_object_to_sign(obj: Union[TransactionAPI, SignableMessage]):
