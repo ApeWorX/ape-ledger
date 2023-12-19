@@ -10,6 +10,7 @@ from ape.types import AddressType
 from ape_ethereum.ecosystem import DynamicFeeTransaction, StaticFeeTransaction
 from eip712.messages import EIP712Message, EIP712Type
 from eth_account.messages import SignableMessage
+from eth_pydantic_types import HexBytes
 
 from ape_ledger.accounts import AccountContainer, LedgerAccount
 from ape_ledger.exceptions import LedgerSigningError
@@ -50,7 +51,7 @@ def build_transaction(
     txn.nonce = 0
     txn.gas_limit = 2
     txn.value = 10000000000
-    txn.data = TEST_TXN_DATA
+    txn.data = HexBytes(TEST_TXN_DATA)
 
     if receiver:
         txn.receiver = receiver
@@ -144,7 +145,7 @@ class TestLedgerAccount:
         v, r, s = account.sign_message(message)
         assert (v, int(r.hex(), 16), int(s.hex(), 16)) == msg_signature
         output = capsys.readouterr()
-        assert str(message) in output.out
+        assert repr(message).replace("\n", "") in output.out.replace("\n", "")
         assert "Please follow the prompts on your device." in output.out
 
     def test_sign_message_unsupported(self, account, capsys):
@@ -154,7 +155,8 @@ class TestLedgerAccount:
             header=b"thereum Signed Message:\n6",
             body=b"I\xe2\x99\xa5SF",
         )
-        expected = rf"Unsupported message-signing specification, \(version={unsupported_version}\)."
+        version_str = unsupported_version.decode("utf8")
+        expected = rf"Unsupported message-signing specification, \(version={version_str}\)\."
         with pytest.raises(LedgerSigningError, match=expected):
             account.sign_message(message)
 

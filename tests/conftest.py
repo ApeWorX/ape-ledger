@@ -2,12 +2,9 @@ import json
 
 import pytest
 from ape import accounts, networks
-from ape.api.accounts import AccountContainerAPI
 from click.testing import CliRunner
 from eth_account.messages import encode_defunct
-from ethpm_types import HexBytes
-
-from ape_ledger.client import LedgerDeviceClient
+from eth_pydantic_types import HexBytes
 
 TEST_ALIAS = "TestAlias"
 TEST_HD_PATH = "m/44'/60'/{x}'/0/0"
@@ -81,7 +78,7 @@ def tx_signature(receipt):
 
 @pytest.fixture(autouse=True)
 def mock_device(mocker, hd_path, account_addresses, msg_signature, tx_signature):
-    device = mocker.MagicMock(spec=LedgerDeviceClient)
+    device = mocker.MagicMock()
     device._account = hd_path
     device.get_address.side_effect = (
         lambda *args, **kwargs: account_addresses[args[0]] if args else account_addresses[0]
@@ -94,7 +91,7 @@ def mock_device(mocker, hd_path, account_addresses, msg_signature, tx_signature)
 
 @pytest.fixture
 def mock_container(mocker):
-    return mocker.MagicMock(spec=AccountContainerAPI)
+    return mocker.MagicMock()
 
 
 @pytest.fixture
