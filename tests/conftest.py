@@ -80,8 +80,8 @@ def tx_signature(receipt):
 def mock_device(mocker, hd_path, account_addresses, msg_signature, tx_signature):
     device = mocker.MagicMock()
     device._account = hd_path
-    device.get_address.side_effect = (
-        lambda *args, **kwargs: account_addresses[args[0]] if args else account_addresses[0]
+    device.get_address.side_effect = lambda *args, **kwargs: (
+        account_addresses[args[0]] if args else account_addresses[0]
     )
     device.sign_message.side_effect = lambda *args, **kwargs: msg_signature
     device.sign_typed_data.side_effect = lambda *args, **kwargs: msg_signature
