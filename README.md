@@ -5,7 +5,7 @@ to load and create accounts, sign messages, and sign transactions.
 
 ## Dependencies
 
-- [python3](https://www.python.org/downloads) version 3.8 up to 3.12.
+- [python3](https://www.python.org/downloads) version 3.9 up to 3.12.
 
 ## Installation
 
@@ -44,8 +44,8 @@ ape ledger add <alias>
 Ledger accounts have the following capabilities in `ape`:
 
 1. Can sign transactions
-2. Can sign messages using the default EIP-191 specification
-3. Can sign messages using the EIP-712 specification
+1. Can sign messages using the default EIP-191 specification
+1. Can sign messages using the EIP-712 specification
 
 ### Adjust HD Path
 

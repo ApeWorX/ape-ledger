@@ -1,12 +1,11 @@
 import json
-import tempfile
-from pathlib import Path
 from typing import Optional, cast
 
 import pytest
 from ape import networks
 from ape.api import TransactionAPI
 from ape.types import AddressType
+from ape.utils import create_tempdir
 from ape_ethereum.ecosystem import DynamicFeeTransaction, StaticFeeTransaction
 from eip712.messages import EIP712Message, EIP712Type
 from eth_account.messages import SignableMessage
@@ -105,21 +104,20 @@ def isolated_file_system(runner):
 
 @pytest.fixture
 def account(mock_container, create_account, hd_path):
-    with tempfile.TemporaryDirectory() as temp_dir:
-        path = Path(temp_dir) / "account.json"
+    with create_tempdir() as temp_dir:
+        path = temp_dir / "account.json"
         create_account(path, hd_path)
         with networks.ethereum.local.use_provider("test"):
-            yield LedgerAccount(container=mock_container, account_file_path=path)
+            yield LedgerAccount(name=mock_container, account_file_path=path)
 
 
 class TestAccountContainer:
     def test_save_account(self, mock_container, alias, address, hd_path, assert_account):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            data_path = Path(temp_dir)
-            container = AccountContainer(data_folder=data_path, account_type=LedgerAccount)
-            container.save_account(alias, address, hd_path)
-            account_path = data_path / f"{alias}.json"
-            assert_account(account_path, expected_hdpath=hd_path)
+        container = AccountContainer(account_type=LedgerAccount)
+        container.save_account(alias, address, hd_path)
+        temp_dir = container.config_manager.DATA_FOLDER
+        account_path = temp_dir / "ledger" / f"{alias}.json"
+        assert_account(account_path, expected_hdpath=hd_path)
 
 
 class TestLedgerAccount:

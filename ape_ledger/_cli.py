@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Union
 
 import click
 from ape import accounts
@@ -18,7 +18,7 @@ from ape_ledger.exceptions import LedgerSigningError
 from ape_ledger.hdpath import HDAccountPath, HDBasePath
 
 
-def _select_account(hd_path: Union[HDBasePath, str]) -> Tuple[str, HDAccountPath]:
+def _select_account(hd_path: Union[HDBasePath, str]) -> tuple[str, HDAccountPath]:
     choices = AddressPromptChoice(hd_path)
     return choices.get_user_selected_account()
 
@@ -52,7 +52,7 @@ def _list(cli_ctx):
         click.echo(f"  {account.address}{alias_display}{hd_path_display}")
 
 
-def _get_ledger_accounts() -> List[LedgerAccount]:
+def _get_ledger_accounts() -> list[LedgerAccount]:
     return [a for a in accounts if isinstance(a, LedgerAccount)]
 
 
