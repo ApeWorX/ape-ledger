@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 from tempfile import mkdtemp
 
@@ -20,8 +21,7 @@ ape.config.DATA_FOLDER = DATA_FOLDER
 @pytest.fixture(autouse=True, scope="session")
 def clean_data_folder():
     yield  # Run all tests
-    if DATA_FOLDER.is_dir():
-        DATA_FOLDER.rmdir()
+    shutil.rmtree(DATA_FOLDER, ignore_errors=True)
 
 
 @pytest.fixture
