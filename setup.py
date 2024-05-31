@@ -60,7 +60,7 @@ setup(
     url="https://github.com/ApeWorX/ape-ledger",
     include_package_data=True,
     install_requires=[
-        "eth-ape>=0.7.0,<0.8",
+        "eth-ape>=0.8.1,<0.9",
         "ledgereth>=0.9.1,<0.10",
         "click",  # Use same version as eth-ape
         "rich",  # Use same version as eth-ape
