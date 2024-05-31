@@ -1,13 +1,27 @@
 import json
+import shutil
+from pathlib import Path
+from tempfile import mkdtemp
 
+import ape
 import pytest
-from ape import accounts, networks
 from click.testing import CliRunner
 from eth_account.messages import encode_defunct
 from eth_pydantic_types import HexBytes
 
 TEST_ALIAS = "TestAlias"
 TEST_HD_PATH = "m/44'/60'/{x}'/0/0"
+
+
+# NOTE: Ensure that we don't use local paths for these
+DATA_FOLDER = Path(mkdtemp()).resolve()
+ape.config.DATA_FOLDER = DATA_FOLDER
+
+
+@pytest.fixture(autouse=True, scope="session")
+def clean_data_folder():
+    yield  # Run all tests
+    shutil.rmtree(DATA_FOLDER, ignore_errors=True)
 
 
 @pytest.fixture
@@ -22,7 +36,7 @@ def alias():
 
 @pytest.fixture
 def test_accounts():
-    return accounts.test_accounts
+    return ape.accounts.test_accounts
 
 
 @pytest.fixture
@@ -47,7 +61,7 @@ def address(account_addresses):
 
 @pytest.fixture(autouse=True)
 def connection():
-    with networks.ethereum.local.use_provider("test") as provider:
+    with ape.networks.ethereum.local.use_provider("test") as provider:
         yield provider
 
 
@@ -101,12 +115,12 @@ def runner():
 
 @pytest.fixture
 def assert_account(address):
-    def fn(account_path, expected_address=None, expected_hdpath="m/44'/60'/0'/0/0"):
+    def fn(account_path: Path, expected_address=None, expected_hdpath="m/44'/60'/0'/0/0"):
         expected_address = expected_address or address
-        with open(account_path) as account_file:
-            account_data = json.load(account_file)
-            assert account_data["address"] == expected_address
-            assert account_data["hdpath"] == expected_hdpath
+        assert account_path.is_file(), "Account file missing."
+        account_data = json.loads(account_path.read_text())
+        assert account_data["address"] == expected_address
+        assert account_data["hdpath"] == expected_hdpath
 
     return fn
 

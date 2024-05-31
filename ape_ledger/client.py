@@ -1,6 +1,5 @@
 import atexit
 from functools import cached_property
-from typing import Dict, Tuple
 
 import hid  # type: ignore
 from ape.logging import LogLevel, logger
@@ -13,7 +12,7 @@ from ape_ledger.hdpath import HDAccountPath
 
 
 class DeviceFactory:
-    device_map: Dict[str, "LedgerDeviceClient"] = {}
+    device_map: dict[str, "LedgerDeviceClient"] = {}
 
     def create_device(self, account: HDAccountPath):
         if account.path in self.device_map:
@@ -56,23 +55,24 @@ class LedgerDeviceClient:
     def get_address(self) -> str:
         return get_account_by_path(self._account, dongle=self.dongle).address
 
-    def sign_message(self, text: bytes) -> Tuple[int, int, int]:
+    def sign_message(self, text: bytes) -> tuple[int, int, int]:
         signed_msg = sign_message(text, sender_path=self._account, dongle=self.dongle)
         return signed_msg.v, signed_msg.r, signed_msg.s
 
-    def sign_typed_data(self, domain_hash: bytes, message_hash: bytes) -> Tuple[int, int, int]:
+    def sign_typed_data(self, domain_hash: bytes, message_hash: bytes) -> tuple[int, int, int]:
         signed_msg = sign_typed_data_draft(
             domain_hash, message_hash, sender_path=self._account, dongle=self.dongle
         )
         return signed_msg.v, signed_msg.r, signed_msg.s
 
-    def sign_transaction(self, txn: Dict) -> Tuple[int, int, int]:
+    def sign_transaction(self, txn: dict) -> tuple[int, int, int]:
         kwargs = {**txn, "sender_path": self._account, "dongle": self.dongle}
         signed_tx = create_transaction(**kwargs)
-        if isinstance(signed_tx, SignedType2Transaction):
-            return signed_tx.y_parity, signed_tx.sender_r, signed_tx.sender_s
-        else:
-            return signed_tx.v, signed_tx.r, signed_tx.s
+        return (
+            (signed_tx.y_parity, signed_tx.sender_r, signed_tx.sender_s)
+            if isinstance(signed_tx, SignedType2Transaction)
+            else (signed_tx.v, signed_tx.r, signed_tx.s)
+        )
 
 
 _device_factory = DeviceFactory()

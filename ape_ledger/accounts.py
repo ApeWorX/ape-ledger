@@ -1,6 +1,7 @@
 import json
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Optional
 
 import rich
 from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI
@@ -31,6 +32,8 @@ def _to_bytes(val) -> bytes:
 
 
 class AccountContainer(AccountContainerAPI):
+    name: str = "ledger"
+
     @property
     def accounts(self) -> Iterator[AccountAPI]:
         for account_file in self._account_files:
@@ -172,7 +175,7 @@ class LedgerAccount(AccountAPI):
 
     def sign_transaction(self, txn: TransactionAPI, **kwargs) -> Optional[TransactionAPI]:
         txn.chain_id = 1
-        txn_dict: Dict = {
+        txn_dict: dict = {
             "nonce": txn.nonce,
             "gas": txn.gas_limit,
             "amount": txn.value,
