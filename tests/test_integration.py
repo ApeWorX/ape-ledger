@@ -75,7 +75,7 @@ def test_list(runner, existing_account, cmd, address, alias):
 def test_add(runner, assert_account, address, alias, choices, hd_path):
     container = _get_container()
     choices(address, 2)
-    result = runner.invoke(cli, ["ledger", "add", alias])
+    result = runner.invoke(cli, ["ledger", "add", alias], catch_exceptions=False)
     assert result.exit_code == 0, result.output
     assert f"Account '{address}' successfully added with alias '{alias}'." in result.output
 

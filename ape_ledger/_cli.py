@@ -59,6 +59,12 @@ def _get_ledger_accounts() -> list["LedgerAccount"]:
     return [a for a in ManagerAccessMixin.account_manager if isinstance(a, LedgerAccount)]
 
 
+def _hdpath_callback(ctx, param, val) -> "HDBasePath":
+    from ape_ledger.hdpath import HDBasePath
+
+    return HDBasePath(val)
+
+
 @cli.command()
 @ape_cli_context()
 @non_existing_alias_argument()
@@ -69,7 +75,7 @@ def _get_ledger_accounts() -> list["LedgerAccount"]:
         "Defaults to m/44'/60'/{x}'/0/0 where {{x}} is the account ID. "
         "Exclude {x} to append the account ID to the end of the base path."
     ),
-    callback=lambda ctx, param, arg: HDBasePath(arg),
+    callback=_hdpath_callback,
 )
 def add(cli_ctx, alias, hd_path):
     """Add an account from your Ledger hardware wallet"""
