@@ -108,10 +108,9 @@ def test_add_alias_already_exists(runner, existing_account, choices, address, al
 
     result = runner.invoke(cli, ["ledger", "add", alias])
     assert result.exit_code == 1, result.output
-    assert (
-        f"ERROR: (AliasAlreadyInUseError) Account with alias '{alias}' already in use."
-        in result.output
-    )
+    assert "ERROR:" in result.output
+    assert "(AliasAlreadyInUseError)" in result.output
+    assert f"Account with alias '{alias}' already in use." in result.output
 
 
 def test_delete(runner, existing_account, alias):
