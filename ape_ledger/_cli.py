@@ -75,7 +75,7 @@ def add(cli_ctx, alias, hd_path):
     """Add an account from your Ledger hardware wallet"""
 
     address, account_hd_path = _select_account(hd_path)
-    container = ManagerAccessMixin.account_manager.containers["ledger"]
+    container = cli_ctx.account_manager.containers["ledger"]
     container.save_account(alias, address, str(account_hd_path))
     cli_ctx.logger.success(f"Account '{address}' successfully added with alias '{alias}'.")
 
@@ -92,7 +92,7 @@ def _filter_accounts(acct: "AccountAPI") -> bool:
 def delete(cli_ctx, alias):
     """Remove a Ledger account from ape"""
 
-    container = ManagerAccessMixin.account_manager.containers["ledger"]
+    container = cli_ctx.account_manager.containers["ledger"]
     container.delete_account(alias)
     cli_ctx.logger.success(f"Account '{alias}' has been removed.")
 
@@ -103,7 +103,7 @@ def delete(cli_ctx, alias):
 def delete_all(cli_ctx, skip_confirmation):
     """Remove all Ledger accounts from ape"""
 
-    container = ManagerAccessMixin.account_manager.containers["ledger"]
+    container = cli_ctx.account_manager.containers["ledger"]
     ledger_accounts = _get_ledger_accounts()
     if len(ledger_accounts) == 0:
         cli_ctx.logger.warning("No accounts found.")
@@ -140,11 +140,11 @@ def sign_message(cli_ctx, alias, message, network):
 
 
 def _sign_message(cli_ctx, alias, message):
-    if alias not in ManagerAccessMixin.account_manager.aliases:
+    if alias not in cli_ctx.account_manager.aliases:
         cli_ctx.abort(f"Account with alias '{alias}' does not exist.")
 
     eip191message = encode_defunct(text=message)
-    account = ManagerAccessMixin.account_manager.load(alias)
+    account = cli_ctx.account_manager.load(alias)
     signature = account.sign_message(eip191message)
 
     if not signature:
@@ -162,9 +162,10 @@ def _sign_message(cli_ctx, alias, message):
 
 
 @cli.command(short_help="Verify a message with your Trezor device")
+@ape_cli_context()
 @click.argument("message")
 @click.argument("signature")
-def verify_message(message, signature):
+def verify_message(cli_ctx, message, signature):
     eip191message = encode_defunct(text=message)
 
     try:
@@ -174,8 +175,8 @@ def verify_message(message, signature):
         raise LedgerSigningError(message) from exc
 
     alias = (
-        ManagerAccessMixin.account_manager[signer_address].alias
-        if signer_address in ManagerAccessMixin.account_manager
+        cli_ctx.account_manager[signer_address].alias
+        if signer_address in cli_ctx.account_manager
         else ""
     )
     click.echo(f"Signer: {signer_address}  {alias}")
