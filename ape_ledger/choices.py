@@ -1,11 +1,11 @@
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import click
 from ape.cli import PromptChoice
 from click import Context, Parameter
 
-from ape_ledger.client import get_device
-from ape_ledger.hdpath import HDAccountPath, HDBasePath
+if TYPE_CHECKING:
+    from ape_ledger.hdpath import HDAccountPath, HDBasePath
 
 
 class AddressPromptChoice(PromptChoice):
@@ -17,10 +17,12 @@ class AddressPromptChoice(PromptChoice):
 
     def __init__(
         self,
-        hd_path: Union[HDBasePath, str],
+        hd_path: Union["HDBasePath", str],
         index_offset: int = 0,
         page_size: int = DEFAULT_PAGE_SIZE,
     ):
+        from ape_ledger.hdpath import HDBasePath
+
         if isinstance(hd_path, str):
             hd_path = HDBasePath(base_path=hd_path)
 
@@ -58,7 +60,7 @@ class AddressPromptChoice(PromptChoice):
         self._choice_index = self._choice_index if address_index is None else address_index
         return address
 
-    def get_user_selected_account(self) -> tuple[str, HDAccountPath]:
+    def get_user_selected_account(self) -> tuple[str, "HDAccountPath"]:
         """Returns the selected address from the user along with the HD path.
         The user is able to page using special characters ``n`` and ``p``.
         """
@@ -98,6 +100,9 @@ class AddressPromptChoice(PromptChoice):
         self.choices = [self._get_address(i) for i in index_range]
 
     def _get_address(self, account_id: int) -> str:
+        # Perf: lazy load so CLI-usage is faster.
+        from ape_ledger.client import get_device
+
         path = self._hd_root_path.get_account_path(account_id)
         device = get_device(path)
         return device.get_address()

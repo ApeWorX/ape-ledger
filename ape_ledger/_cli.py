@@ -3,9 +3,6 @@ from typing import TYPE_CHECKING, Union
 import click
 from ape.cli.arguments import existing_alias_argument, non_existing_alias_argument
 from ape.cli.options import ape_cli_context, network_option, skip_confirmation_option
-from ape.utils.basemodel import ManagerAccessMixin
-from eth_account import Account
-from eth_account.messages import encode_defunct
 
 if TYPE_CHECKING:
     # NOTE: Type-checking only imports so CLI help loads faster.
@@ -54,6 +51,8 @@ def _list(cli_ctx):
 
 
 def _get_ledger_accounts() -> list["LedgerAccount"]:
+    from ape.utils.basemodel import ManagerAccessMixin
+
     from ape_ledger.accounts import LedgerAccount
 
     return [a for a in ManagerAccessMixin.account_manager if isinstance(a, LedgerAccount)]
@@ -146,6 +145,9 @@ def sign_message(cli_ctx, alias, message, network):
 
 
 def _sign_message(cli_ctx, alias, message):
+    from eth_account.account import Account
+    from eth_account.messages import encode_defunct
+
     if alias not in cli_ctx.account_manager.aliases:
         cli_ctx.abort(f"Account with alias '{alias}' does not exist.")
 
@@ -172,6 +174,9 @@ def _sign_message(cli_ctx, alias, message):
 @click.argument("message")
 @click.argument("signature")
 def verify_message(cli_ctx, message, signature):
+    from eth_account.account import Account
+    from eth_account.messages import encode_defunct
+
     eip191message = encode_defunct(text=message)
 
     try:
