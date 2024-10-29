@@ -6,6 +6,7 @@ from ape.cli import PromptChoice
 if TYPE_CHECKING:
     from click import Context, Parameter
 
+    from ape_ledger.client import LedgerDeviceClient
     from ape_ledger.hdpath import HDAccountPath, HDBasePath
 
 
@@ -101,12 +102,16 @@ class AddressPromptChoice(PromptChoice):
         self.choices = [self._get_address(i) for i in index_range]
 
     def _get_address(self, account_id: int) -> str:
-        # Perf: lazy load so CLI-usage is faster.
-        from ape_ledger.client import get_device
-
         path = self._hd_root_path.get_account_path(account_id)
         device = get_device(path)
         return device.get_address()
+
+
+def get_device(path: "HDAccountPath") -> "LedgerDeviceClient":
+    # Perf: lazy load so CLI-usage is faster and abstracted for testing purposes.
+    from ape_ledger.client import get_device as _get_device
+
+    return _get_device(path)
 
 
 __all__ = ["AddressPromptChoice"]
