@@ -2,9 +2,10 @@ from typing import TYPE_CHECKING, Any, Optional, Union
 
 import click
 from ape.cli import PromptChoice
-from click import Context, Parameter
 
 if TYPE_CHECKING:
+    from click import Context, Parameter
+
     from ape_ledger.hdpath import HDAccountPath, HDBasePath
 
 

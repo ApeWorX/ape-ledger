@@ -1,5 +1,6 @@
 import atexit
 from functools import cached_property
+from typing import TYPE_CHECKING
 
 import hid  # type: ignore
 from ape.logging import LogLevel, logger
@@ -8,13 +9,14 @@ from ledgereth.accounts import get_account_by_path
 from ledgereth.messages import sign_message, sign_typed_data_draft
 from ledgereth.transactions import SignedType2Transaction, create_transaction
 
-from ape_ledger.hdpath import HDAccountPath
+if TYPE_CHECKING:
+    from ape_ledger.hdpath import HDAccountPath
 
 
 class DeviceFactory:
     device_map: dict[str, "LedgerDeviceClient"] = {}
 
-    def create_device(self, account: HDAccountPath):
+    def create_device(self, account: "HDAccountPath"):
         if account.path in self.device_map:
             return self.device_map[account.path]
 
@@ -37,7 +39,7 @@ def get_dongle(debug: bool = False, reopen_on_fail: bool = True) -> HIDDongleHID
 
 
 class LedgerDeviceClient:
-    def __init__(self, account: HDAccountPath):
+    def __init__(self, account: "HDAccountPath"):
         self._account = account.path.lstrip("m/")
 
     @cached_property
@@ -78,5 +80,5 @@ class LedgerDeviceClient:
 _device_factory = DeviceFactory()
 
 
-def get_device(account: HDAccountPath):
+def get_device(account: "HDAccountPath") -> LedgerDeviceClient:
     return _device_factory.create_device(account)
