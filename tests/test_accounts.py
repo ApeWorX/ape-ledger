@@ -1,10 +1,8 @@
 import json
-from typing import Optional, cast
+from typing import TYPE_CHECKING, Optional, cast
 
 import pytest
 from ape import networks
-from ape.api import TransactionAPI
-from ape.types import AddressType
 from ape.utils import create_tempdir
 from ape_ethereum.ecosystem import DynamicFeeTransaction, StaticFeeTransaction
 from eip712.messages import EIP712Message, EIP712Type
@@ -13,6 +11,10 @@ from eth_pydantic_types import HexBytes
 
 from ape_ledger.accounts import AccountContainer, LedgerAccount
 from ape_ledger.exceptions import LedgerSigningError
+
+if TYPE_CHECKING:
+    from ape.api import TransactionAPI
+    from ape.types import AddressType
 
 
 @pytest.fixture(autouse=True)
@@ -44,8 +46,8 @@ TEST_TXN_DATA = b"""`\x80`@R4\x80\x15a\x00\x10W`\x00\x80\xfd[P`\x00\x80T`\x01`\x
 
 
 def build_transaction(
-    txn: TransactionAPI, receiver: Optional[AddressType] = None
-) -> TransactionAPI:
+    txn: "TransactionAPI", receiver: Optional["AddressType"] = None
+) -> "TransactionAPI":
     txn.chain_id = 579875
     txn.nonce = 0
     txn.gas_limit = 2
@@ -62,7 +64,7 @@ def build_transaction(
 
 
 def create_static_fee_txn(
-    receiver: Optional[AddressType] = None,
+    receiver: Optional["AddressType"] = None,
 ) -> StaticFeeTransaction:
     txn = StaticFeeTransaction()
     txn = cast(StaticFeeTransaction, build_transaction(txn, receiver=receiver))
@@ -71,7 +73,7 @@ def create_static_fee_txn(
 
 
 def create_dynamic_fee_txn(
-    receiver: Optional[AddressType] = None,
+    receiver: Optional["AddressType"] = None,
 ) -> DynamicFeeTransaction:
     txn = DynamicFeeTransaction()
     txn = cast(DynamicFeeTransaction, build_transaction(txn, receiver=receiver))

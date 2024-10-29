@@ -56,7 +56,7 @@ def choices(mocker):
 
 
 def _clean_up(runner):
-    runner.invoke(cli, ["ledger", "delete", alias], input="y")
+    runner.invoke(cli, ("ledger", "delete", alias), input="y")
 
 
 def _get_account_path(alias=alias):
@@ -75,7 +75,7 @@ def test_list(runner, existing_account, cmd, address, alias):
 def test_add(runner, assert_account, address, alias, choices, hd_path):
     container = _get_container()
     choices(address, 2)
-    result = runner.invoke(cli, ["ledger", "add", alias])
+    result = runner.invoke(cli, ("ledger", "add", alias), catch_exceptions=False)
     assert result.exit_code == 0, result.output
     assert f"Account '{address}' successfully added with alias '{alias}'." in result.output
 
@@ -90,7 +90,7 @@ def test_add_when_hd_path_specified(runner, alias, address, hd_path, assert_acco
     choices(address, 2)
     result = runner.invoke(
         cli,
-        ["ledger", "add", alias, "--hd-path", test_hd_path],
+        ("ledger", "add", alias, "--hd-path", test_hd_path),
     )
     assert result.exit_code == 0, result.output
     assert f"Account '{address}' successfully added with alias '{alias}'." in result.output
@@ -104,24 +104,23 @@ def test_add_alias_already_exists(runner, existing_account, choices, address, al
     choices(address, 2)
 
     # Ensure exists
-    runner.invoke(cli, ["ledger", "add", alias])
+    runner.invoke(cli, ("ledger", "add", alias))
 
-    result = runner.invoke(cli, ["ledger", "add", alias])
+    result = runner.invoke(cli, ("ledger", "add", alias))
     assert result.exit_code == 1, result.output
-    assert (
-        f"ERROR: (AliasAlreadyInUseError) Account with alias '{alias}' already in use."
-        in result.output
-    )
+    assert "ERROR:" in result.output
+    assert "(AliasAlreadyInUseError)" in result.output
+    assert f"Account with alias '{alias}' already in use." in result.output
 
 
 def test_delete(runner, existing_account, alias):
-    result = runner.invoke(cli, ["ledger", "delete", alias])
+    result = runner.invoke(cli, ("ledger", "delete", alias))
     assert result.exit_code == 0, result.output
     assert f"Account '{alias}' has been removed" in result.output
 
 
 def test_delete_account_not_exists(runner, alias):
     not_alias = f"{alias}TYPO"
-    result = runner.invoke(cli, ["ledger", "delete", not_alias])
+    result = runner.invoke(cli, ("ledger", "delete", not_alias))
     assert result.exit_code == 2
     assert f"'{not_alias}'" in result.output
