@@ -11,6 +11,7 @@ from eip712 import EIP712Message
 from eth_account.messages import SignableMessage, encode_defunct
 from eth_pydantic_types import HexBytes
 from eth_utils import is_0x_prefixed, to_bytes
+from ledgereth.exceptions import LedgerError
 
 from ape_ledger.client import LedgerDeviceClient, get_device
 from ape_ledger.exceptions import LedgerSigningError
@@ -153,10 +154,18 @@ class LedgerAccount(AccountAPI):
         if use_eip712:
             header = HexBytes(msg_to_sign.header)
             body = HexBytes(msg_to_sign.body)
-            signed_msg = self._client.sign_typed_data(header, body)
+            try:
+                signed_msg = self._client.sign_typed_data(header, body)
+
+            except LedgerError:
+                return None
 
         else:
-            signed_msg = self._client.sign_message(msg_to_sign.body)
+            try:
+                signed_msg = self._client.sign_message(msg_to_sign.body)
+
+            except LedgerError:
+                return None
 
         v, r, s = signed_msg
         return MessageSignature(v=v, r=HexBytes(r), s=HexBytes(s))
