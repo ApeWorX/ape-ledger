@@ -7,8 +7,7 @@ import rich
 from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI
 from ape.types import AddressType, MessageSignature, TransactionSignature
 from ape_ethereum.transactions import DynamicFeeTransaction, StaticFeeTransaction
-from dataclassy import asdict
-from eip712 import EIP712Message, EIP712Type
+from eip712 import EIP712Message
 from eth_account.messages import SignableMessage, encode_defunct
 from eth_pydantic_types import HexBytes
 from eth_utils import is_0x_prefixed, to_bytes
@@ -71,27 +70,16 @@ class AccountContainer(AccountContainerAPI):
 
 
 def _echo_object_to_sign(obj: Any):
-    suffix = "Please follow the prompts on your device."
+    # NOTE: pydantic models actually have very nice `rich.print` support
+    rich.print(obj)
+
     if isinstance(obj, EIP712Message):
+        # NOTE: Ledger Nano devices only show domain hash and message hash for EIP712
+        _, domain_hash, message_hash = obj.signable_message
+        rich.print(f"Domain Hash: 0x{domain_hash.hex().upper()}")
+        rich.print(f"Message Hash: 0x{message_hash.hex().upper()}")
 
-        def make_str(val) -> str:
-            if isinstance(val, dict):
-                return ", ".join([f"{k}={make_str(v)}" for k, v in val.items()])
-            elif isinstance(val, EIP712Type):
-                subfields_str = make_str(asdict(val))
-                return f"{repr(val)}({subfields_str})"
-            elif isinstance(val, (tuple, list, set)):
-                inner = ", ".join([make_str(x) for x in val])
-                return f"[{inner}]"
-            else:
-                return f"{val}"
-
-        fields_str = make_str(obj._body_["message"])
-        message_str = f"{repr(obj)}({fields_str})"
-    else:
-        message_str = f"{obj}"
-
-    rich.print(f"{message_str}\n{suffix}")
+    rich.print("Please follow the prompts on your device.")
 
 
 class LedgerAccount(AccountAPI):
