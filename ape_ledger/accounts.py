@@ -71,16 +71,20 @@ class AccountContainer(AccountContainerAPI):
 
 
 def _echo_object_to_sign(obj: Any):
-    # NOTE: pydantic models actually have very nice `rich.print` support
-    rich.print(obj)
 
     if isinstance(obj, EIP712Message):
+        # NOTE: pydantic models actually have very nice `rich.print` support
+        rich.print(obj)
+
         # NOTE: Ledger Nano devices only show domain hash and message hash for EIP712
         _, domain_hash, message_hash = obj.signable_message
         rich.print(f"Domain Hash: 0x{domain_hash.hex().upper()}")
         rich.print(f"Message Hash: 0x{message_hash.hex().upper()}")
 
-    rich.print("Please follow the prompts on your device.")
+    else:  # NOTE: Do this to capture our native handling of TransactionAPI
+        rich.print(str(obj))
+
+    rich.print("\nPlease follow the prompts on your device.\n")
 
 
 class LedgerAccount(AccountAPI):

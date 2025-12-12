@@ -178,5 +178,6 @@ class TestLedgerAccount:
         v, r, s = actual.signature
         assert (v, int(r.hex(), 16), int(s.hex(), 16)) == tx_signature
         output = capsys.readouterr()
-        assert str(txn) in output.out
+        # NOTE: `\t` shows up this way
+        assert str(txn).replace("\t", "        ") in output.out
         assert "Please follow the prompts on your device." in output.out
