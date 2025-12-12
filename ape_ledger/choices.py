@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 import click
 from ape.cli import PromptChoice
@@ -19,7 +19,7 @@ class AddressPromptChoice(PromptChoice):
 
     def __init__(
         self,
-        hd_path: Union["HDBasePath", str],
+        hd_path: "HDBasePath | str",
         index_offset: int = 0,
         page_size: int = DEFAULT_PAGE_SIZE,
     ):
@@ -31,7 +31,7 @@ class AddressPromptChoice(PromptChoice):
         self._hd_root_path = hd_path
         self._index_offset = index_offset
         self._page_size = page_size
-        self._choice_index: Optional[int] = None
+        self._choice_index: int | None = None
 
         # Must call ``_load_choices()`` to set address choices
         super().__init__([])
@@ -48,9 +48,7 @@ class AddressPromptChoice(PromptChoice):
             f"or type 'n' for the next {self._page_size} entries"
         )
 
-    def convert(
-        self, value: Any, param: Optional["Parameter"], ctx: Optional["Context"]
-    ) -> Optional[str]:
+    def convert(self, value: Any, param: "Parameter | None", ctx: "Context | None") -> str | None:
         """Convert the user selection to a choice or increment /decrement
         if they input ``n`` or ``p``."""
         if self._page_from_choice(value):

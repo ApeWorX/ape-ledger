@@ -1,5 +1,4 @@
 import struct
-from typing import Optional, Union
 
 
 class HDPath:
@@ -9,7 +8,7 @@ class HDPath:
     as well as the derivation HD path class :class:`~ape_ledger.hdpath.HDBasePath`.
     """
 
-    def __init__(self, path: Union[str, "HDBasePath"]):
+    def __init__(self, path: "HDBasePath | str"):
         if not isinstance(path, str) and hasattr(path, "path"):
             # NOTE: Using getattr for mypy
             path_str = getattr(path, "path")
@@ -71,7 +70,7 @@ class HDBasePath(HDPath):
     :class:`~ape_ledger.hdpath.HDAccountPath`.
     """
 
-    def __init__(self, base_path: Optional[Union[str, "HDBasePath"]] = None):
+    def __init__(self, base_path: "HDBasePath | str | None" = None):
         base_path = base_path or "m/44'/60'/{x}'/0/0"
         if not isinstance(base_path, str) and hasattr(base_path, "path"):
             base_path_str = base_path.path

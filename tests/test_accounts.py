@@ -1,5 +1,5 @@
 import json
-from typing import TYPE_CHECKING, Optional, cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 from ape import networks
@@ -46,7 +46,7 @@ TEST_TXN_DATA = b"""`\x80`@R4\x80\x15a\x00\x10W`\x00\x80\xfd[P`\x00\x80T`\x01`\x
 
 
 def build_transaction(
-    txn: "TransactionAPI", receiver: Optional["AddressType"] = None
+    txn: "TransactionAPI", receiver: "AddressType | None" = None
 ) -> "TransactionAPI":
     txn.chain_id = 579875
     txn.nonce = 0
@@ -64,7 +64,7 @@ def build_transaction(
 
 
 def create_static_fee_txn(
-    receiver: Optional["AddressType"] = None,
+    receiver: "AddressType | None" = None,
 ) -> StaticFeeTransaction:
     txn = StaticFeeTransaction()
     txn = cast(StaticFeeTransaction, build_transaction(txn, receiver=receiver))
@@ -73,7 +73,7 @@ def create_static_fee_txn(
 
 
 def create_dynamic_fee_txn(
-    receiver: Optional["AddressType"] = None,
+    receiver: "AddressType | None" = None,
 ) -> DynamicFeeTransaction:
     txn = DynamicFeeTransaction()
     txn = cast(DynamicFeeTransaction, build_transaction(txn, receiver=receiver))

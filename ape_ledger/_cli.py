@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import click
 from ape.cli.arguments import existing_alias_argument, non_existing_alias_argument
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 from ape_ledger.exceptions import LedgerSigningError
 
 
-def _select_account(hd_path: Union["HDBasePath", str]) -> tuple[str, "HDAccountPath"]:
+def _select_account(hd_path: "HDBasePath | str") -> tuple[str, "HDAccountPath"]:
     # NOTE: Lazy import so CLI help loads faster.
     from ape_ledger.choices import AddressPromptChoice
 

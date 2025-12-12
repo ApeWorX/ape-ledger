@@ -1,7 +1,7 @@
 import json
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import rich
 from ape.api import AccountAPI, AccountContainerAPI, TransactionAPI
@@ -112,7 +112,7 @@ class LedgerAccount(AccountAPI):
     def account_file(self) -> dict:
         return json.loads(self.account_file_path.read_text())
 
-    def sign_message(self, msg: Any, **signer_options) -> Optional[MessageSignature]:
+    def sign_message(self, msg: Any, **signer_options) -> MessageSignature | None:
         use_eip712_package = isinstance(msg, EIP712Message)
         use_eip712 = use_eip712_package
         if isinstance(msg, str):
@@ -174,7 +174,7 @@ class LedgerAccount(AccountAPI):
         v, r, s = signed_msg
         return MessageSignature(v=v, r=HexBytes(r), s=HexBytes(s))
 
-    def sign_transaction(self, txn: TransactionAPI, **kwargs) -> Optional[TransactionAPI]:
+    def sign_transaction(self, txn: TransactionAPI, **kwargs) -> TransactionAPI | None:
         txn.chain_id = 1
         txn_dict: dict = {
             "nonce": txn.nonce,
