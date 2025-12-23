@@ -63,13 +63,13 @@ setup(
     url="https://github.com/ApeWorX/ape-ledger",
     include_package_data=True,
     install_requires=[
-        "eth-ape>=0.8.1,<0.9",
+        "eth-ape>=0.8.43,<0.9",
         "ledgereth>=0.10.0,<0.11",
         "click",  # Use same version as eth-ape
         "rich",  # Use same version as eth-ape
         # ApeWorX-owned
         "ethpm-types",  # Use same version as eth-ape
-        "eip712",  # Use same version as eth-ape
+        "eip712>=0.3",  # Use same version as eth-ape
         # EF Dependencies
         "eth-account",  # Use same version as eth-ape
         "eth-utils",  # Use same version as eth-ape
