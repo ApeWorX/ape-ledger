@@ -5,9 +5,10 @@ import pytest
 from ape import networks
 from ape.utils import create_tempdir
 from ape_ethereum.ecosystem import DynamicFeeTransaction, StaticFeeTransaction
-from eip712.messages import EIP712Message, EIP712Type
+from eip712.messages import EIP712Message, EIP712Domain
 from eth_account.messages import SignableMessage
-from eth_pydantic_types import HexBytes
+from eth_pydantic_types import HexBytes, abi
+from pydantic import BaseModel
 
 from ape_ledger.accounts import AccountContainer, LedgerAccount
 from ape_ledger.exceptions import LedgerSigningError
@@ -22,16 +23,18 @@ def patch_device(device_factory):
     return device_factory("accounts")
 
 
-class Person(EIP712Type):
-    name: "string"  # type: ignore # noqa: F821
-    wallet: "address"  # type: ignore # noqa: F821
+class Person(BaseModel):
+    name: abi.string
+    wallet: abi.address
 
 
 class Mail(EIP712Message):
-    _chainId_: "uint256" = 1  # type: ignore # noqa: F821
-    _name_: "string" = "Ether Mail"  # type: ignore # noqa: F821
-    _verifyingContract_: "address" = "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC"  # type: ignore # noqa: F821 E501
-    _version_: "string" = "1"  # type: ignore # noqa: F821
+    eip712_domain = EIP712Domain(
+        chainId=1,
+        name="Ether Mail",
+        verifyingContract="0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+        version="1",
+    )
 
     sender: Person
     receiver: Person
