@@ -5,7 +5,7 @@ import pytest
 from ape import networks
 from ape.utils import create_tempdir
 from ape_ethereum.ecosystem import DynamicFeeTransaction, StaticFeeTransaction
-from eip712.messages import EIP712Message, EIP712Domain
+from eip712.messages import EIP712Domain, EIP712Message
 from eth_account.messages import SignableMessage
 from eth_pydantic_types import HexBytes, abi
 from pydantic import BaseModel
