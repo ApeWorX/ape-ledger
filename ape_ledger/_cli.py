@@ -7,6 +7,7 @@ from ape.cli.options import ape_cli_context, network_option, skip_confirmation_o
 if TYPE_CHECKING:
     # NOTE: Type-checking only imports so CLI help loads faster.
     from ape.api import AccountAPI
+
     from ape_ledger.accounts import LedgerAccount
     from ape_ledger.hdpath import HDAccountPath, HDBasePath
 

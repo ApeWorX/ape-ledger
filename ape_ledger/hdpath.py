@@ -1,4 +1,16 @@
 import struct
+from typing import Protocol, cast
+
+
+class _HasPath(Protocol):
+    path: str
+
+
+def _coerce_path(value: "HDBasePath | str") -> str:
+    if isinstance(value, str):
+        return value
+
+    return cast("_HasPath", value).path
 
 
 class HDPath:
@@ -9,12 +21,7 @@ class HDPath:
     """
 
     def __init__(self, path: "HDBasePath | str"):
-        if not isinstance(path, str) and hasattr(path, "path"):
-            # NOTE: Using getattr for mypy
-            path_str = getattr(path, "path")
-        else:
-            path_str = path
-
+        path_str = _coerce_path(path)
         path_str = path_str.rstrip("/")
         if not path_str.startswith("m/"):
             raise ValueError("HD path must begin with m/")
@@ -72,11 +79,7 @@ class HDBasePath(HDPath):
 
     def __init__(self, base_path: "HDBasePath | str | None" = None):
         base_path = base_path or "m/44'/60'/{x}'/0/0"
-        if not isinstance(base_path, str) and hasattr(base_path, "path"):
-            base_path_str = base_path.path
-        else:
-            base_path_str = base_path
-
+        base_path_str = _coerce_path(base_path)
         base_path_str = base_path_str.rstrip("/")
         base_path_str = base_path_str if "{x}" in base_path_str else f"{base_path_str}/{{x}}"
         super().__init__(base_path_str)

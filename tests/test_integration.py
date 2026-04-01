@@ -64,7 +64,7 @@ def _get_account_path(alias=alias):
     return container.data_folder.joinpath(f"{alias}.json")
 
 
-@pytest.mark.parametrize("cmd", (["ledger", "list"], ["accounts", "list", "--all"]))
+@pytest.mark.parametrize("cmd", [["ledger", "list"], ["accounts", "list", "--all"]])
 def test_list(runner, existing_account, cmd, address, alias):
     result = runner.invoke(cli, cmd)
     assert result.exit_code == 0, result.output
