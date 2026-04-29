@@ -77,18 +77,14 @@ def test_add(runner, assert_account, address, alias, choices, hd_path):
     choices(address, 2)
     result = runner.invoke(cli, ("ledger", "add", alias), catch_exceptions=False)
     assert result.exit_code == 0, result.output
-    assert (
-        f"Account '{address}' successfully added with alias '{alias}'." in result.output
-    )
+    assert f"Account '{address}' successfully added with alias '{alias}'." in result.output
 
     expected_path = container.data_folder.joinpath(f"{alias}.json")
     expected_hd_path = "m/44'/60'/2'/0/0"
     assert_account(expected_path, expected_hdpath=expected_hd_path)
 
 
-def test_add_when_hd_path_specified(
-    runner, alias, address, hd_path, assert_account, choices
-):
+def test_add_when_hd_path_specified(runner, alias, address, hd_path, assert_account, choices):
     test_hd_path = "m/44'/60'/0'"
     container = _get_container()
     choices(address, 2)
@@ -97,9 +93,7 @@ def test_add_when_hd_path_specified(
         ("ledger", "add", alias, "--hd-path", test_hd_path),
     )
     assert result.exit_code == 0, result.output
-    assert (
-        f"Account '{address}' successfully added with alias '{alias}'." in result.output
-    )
+    assert f"Account '{address}' successfully added with alias '{alias}'." in result.output
 
     expected_path = container.data_folder.joinpath(f"{alias}.json")
     expected_hd_path = "m/44'/60'/0'/2"

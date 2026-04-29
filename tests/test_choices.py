@@ -25,7 +25,4 @@ class TestAddressPromptChoice:
         mock_prompt.side_effect = _side_effect
         address, hdpath = choices.get_user_selected_account()
         assert address == address
-        assert (
-            str(hdpath)
-            == f"m/44'/60'/{choices._choice_index + choices._index_offset}'/0/0"
-        )
+        assert str(hdpath) == f"m/44'/60'/{choices._choice_index + choices._index_offset}'/0/0"

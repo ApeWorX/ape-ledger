@@ -48,9 +48,7 @@ class AddressPromptChoice(PromptChoice):
             f"or type 'n' for the next {self._page_size} entries"
         )
 
-    def convert(
-        self, value: Any, param: "Parameter | None", ctx: "Context | None"
-    ) -> str | None:
+    def convert(self, value: Any, param: "Parameter | None", ctx: "Context | None") -> str | None:
         """Convert the user selection to a choice or increment /decrement
         if they input ``n`` or ``p``."""
         if self._page_from_choice(value):
@@ -59,9 +57,7 @@ class AddressPromptChoice(PromptChoice):
 
         address = super().convert(value, param, ctx)
         address_index = self.choices.index(address)
-        self._choice_index = (
-            self._choice_index if address_index is None else address_index
-        )
+        self._choice_index = self._choice_index if address_index is None else address_index
         return address
 
     def get_user_selected_account(self) -> tuple[str, "HDAccountPath"]:

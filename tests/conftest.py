@@ -115,9 +115,7 @@ def runner():
 
 @pytest.fixture
 def assert_account(address):
-    def fn(
-        account_path: Path, expected_address=None, expected_hdpath="m/44'/60'/0'/0/0"
-    ):
+    def fn(account_path: Path, expected_address=None, expected_hdpath="m/44'/60'/0'/0/0"):
         expected_address = expected_address or address
         assert account_path.is_file(), "Account file missing."
         account_data = json.loads(account_path.read_text())

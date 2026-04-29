@@ -86,13 +86,9 @@ def get_dongle(debug: bool = False) -> HIDDongleHIDAPI:
         # finds nothing — surface the same actionable message.
         if "no dongle" in (err.message or "").lower():
             raise LedgerAccountException(_open_failed_message()) from err
-        raise LedgerAccountException(
-            f"Failed to communicate with Ledger: {err.message}"
-        ) from err
+        raise LedgerAccountException(f"Failed to communicate with Ledger: {err.message}") from err
     except LedgerError as err:
-        raise LedgerAccountException(
-            f"Failed to communicate with Ledger: {err}"
-        ) from err
+        raise LedgerAccountException(f"Failed to communicate with Ledger: {err}") from err
 
     atexit.register(_close_cached_dongle)
     return _dongle_cache
@@ -113,9 +109,7 @@ class LedgerDeviceClient:
         signed_msg = sign_message(text, sender_path=self._account, dongle=self.dongle)
         return signed_msg.v, signed_msg.r, signed_msg.s
 
-    def sign_typed_data(
-        self, domain_hash: bytes, message_hash: bytes
-    ) -> tuple[int, int, int]:
+    def sign_typed_data(self, domain_hash: bytes, message_hash: bytes) -> tuple[int, int, int]:
         signed_msg = sign_typed_data_draft(
             domain_hash, message_hash, sender_path=self._account, dongle=self.dongle
         )
