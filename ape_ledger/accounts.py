@@ -174,12 +174,13 @@ class LedgerAccount(AccountAPI):
         return MessageSignature(v=v, r=HexBytes(r), s=HexBytes(s))
 
     def sign_transaction(self, txn: TransactionAPI, **kwargs) -> TransactionAPI | None:
-        txn.chain_id = 1
         txn_dict: dict = {
             "nonce": txn.nonce,
             "gas": txn.gas_limit,
             "amount": txn.value,
-            "data": _to_bytes(txn.data.hex()),
+            # NOTE: Pass raw bytes — `txn.data.hex()` is unprefixed on hexbytes>=1.3,
+            # which would cause `_to_bytes` to UTF-8-encode the hex string.
+            "data": bytes(txn.data),
             "destination": _to_bytes(txn.receiver),
             "chain_id": txn.chain_id,
         }
