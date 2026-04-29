@@ -46,8 +46,6 @@ def _open_failed_message() -> str:
             "  - Ledger Live (or another app) is connected to the device. Quit it and retry.\n"
             "  - The device is locked. Unlock it with your PIN.\n"
             "  - The Ethereum app is not open on the device. Open it and retry.\n"
-            "  - On macOS, your terminal may need 'Input Monitoring' permission "
-            "(System Settings -> Privacy & Security -> Input Monitoring)."
         )
     return (
         "No Ledger device detected. Plug in the device, unlock it, "
