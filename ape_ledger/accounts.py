@@ -71,7 +71,6 @@ class AccountContainer(AccountContainerAPI):
 
 
 def _echo_object_to_sign(obj: Any):
-
     if isinstance(obj, EIP712Message):
         # NOTE: pydantic models actually have very nice `rich.print` support
         rich.print(obj)
@@ -191,7 +190,9 @@ class LedgerAccount(AccountAPI):
             txn_dict["max_fee_per_gas"] = txn.max_fee
             txn_dict["max_priority_fee_per_gas"] = txn.max_priority_fee
             if txn.access_list:
-                txn_dict["access_list"] = [[ls.address, ls.storage_keys] for ls in txn.access_list]
+                txn_dict["access_list"] = [
+                    [ls.address, ls.storage_keys] for ls in txn.access_list
+                ]
 
         else:
             raise TypeError(type(txn))

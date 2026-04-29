@@ -88,7 +88,9 @@ def create_dynamic_fee_txn(
 TEST_STATIC_FEE_TXN = create_static_fee_txn()
 TEST_STATIC_FEE_TXN_WITH_RECEIVER = create_static_fee_txn(receiver=TEST_RECEIVER.wallet)
 TEST_DYNAMIC_FEE_TXN = create_dynamic_fee_txn()
-TEST_DYNAMIC_FEE_TXN_WITH_RECEIVER = create_dynamic_fee_txn(receiver=TEST_RECEIVER.wallet)
+TEST_DYNAMIC_FEE_TXN_WITH_RECEIVER = create_dynamic_fee_txn(
+    receiver=TEST_RECEIVER.wallet
+)
 
 
 @pytest.fixture
@@ -117,7 +119,9 @@ def account(mock_container, create_account, hd_path):
 
 
 class TestAccountContainer:
-    def test_save_account(self, mock_container, alias, address, hd_path, assert_account):
+    def test_save_account(
+        self, mock_container, alias, address, hd_path, assert_account
+    ):
         container = AccountContainer(account_type=LedgerAccount)
         container.save_account(alias, address, hd_path)
         temp_dir = container.config_manager.DATA_FOLDER
@@ -159,7 +163,9 @@ class TestLedgerAccount:
             body=b"I\xe2\x99\xa5SF",
         )
         version_str = unsupported_version.decode("utf8")
-        expected = rf"Unsupported message-signing specification, \(version={version_str}\)\."
+        expected = (
+            rf"Unsupported message-signing specification, \(version={version_str}\)\."
+        )
         with pytest.raises(LedgerSigningError, match=expected):
             account.sign_message(message)
 

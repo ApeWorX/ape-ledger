@@ -78,7 +78,9 @@ class HDBasePath(HDPath):
             base_path_str = base_path
 
         base_path_str = base_path_str.rstrip("/")
-        base_path_str = base_path_str if "{x}" in base_path_str else f"{base_path_str}/{{x}}"
+        base_path_str = (
+            base_path_str if "{x}" in base_path_str else f"{base_path_str}/{{x}}"
+        )
         super().__init__(base_path_str)
 
     def get_account_path(self, account_id) -> HDAccountPath:

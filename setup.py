@@ -65,6 +65,9 @@ setup(
     install_requires=[
         "eth-ape>=0.8.43,<0.9",
         "ledgereth>=0.10.0,<0.11",
+        # Pin newer hidapi: older releases have known macOS Sonoma+ HID-open
+        # issues. ledgereth pins ledgerblue==0.1.48, so we cannot bump that.
+        "hidapi>=0.15.0",
         "click",  # Use same version as eth-ape
         "rich",  # Use same version as eth-ape
         # ApeWorX-owned
