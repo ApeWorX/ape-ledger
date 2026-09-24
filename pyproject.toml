@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ape-ledger"
-description = "ape-ledger: Ape plugin"
+description = "ape-ledger: Plugin for Ledger Hardware Wallet"
 readme = "README.md"
 authors = [
     {name = "ApeWorX Ltd.", email = "admin@apeworx.io"}
