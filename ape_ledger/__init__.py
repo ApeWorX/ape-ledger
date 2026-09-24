@@ -15,8 +15,7 @@ def __getattr__(name: str) -> Any:
     if name in ("AccountContainer", "LedgerAccount"):
         return getattr(import_module("ape_ledger.accounts"), name)
 
-    else:
-        raise AttributeError(name)
+    raise AttributeError(name)
 
 
 __all__ = [

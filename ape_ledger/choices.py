@@ -88,7 +88,7 @@ class AddressPromptChoice(PromptChoice):
         if choice == "n":
             self._index_offset += self._page_size
             return True
-        elif choice == "p" and self._is_incremented:
+        if choice == "p" and self._is_incremented:
             self._index_offset -= self._page_size
             return True
 
