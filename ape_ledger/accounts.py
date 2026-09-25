@@ -21,14 +21,13 @@ from ape_ledger.hdpath import HDAccountPath
 def _to_bytes(val) -> bytes:
     if val is None:
         return b""
-    elif isinstance(val, str) and is_0x_prefixed(val):
+    if isinstance(val, str) and is_0x_prefixed(val):
         return to_bytes(hexstr=val)
-    elif isinstance(val, str):
+    if isinstance(val, str):
         return to_bytes(text=val)
-    elif isinstance(val, HexBytes):
+    if isinstance(val, HexBytes):
         return bytes(val)
-    else:
-        return to_bytes(val)
+    return to_bytes(val)
 
 
 class AccountContainer(AccountContainerAPI):

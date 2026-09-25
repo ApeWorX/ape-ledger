@@ -11,7 +11,7 @@ class HDPath:
     def __init__(self, path: "HDBasePath | str"):
         if not isinstance(path, str) and hasattr(path, "path"):
             # NOTE: Using getattr for mypy
-            path_str = getattr(path, "path")
+            path_str = path.path
         else:
             path_str = path
 

@@ -1,42 +1,145 @@
 [build-system]
-requires = ["setuptools>=75.6.0", "wheel", "setuptools_scm[toml]>=5.0"]
+requires = ["setuptools>=75.6.0", "setuptools_scm[toml]>=5.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ape-ledger"
+description = "ape-ledger: Plugin for Ledger Hardware Wallet"
+readme = "README.md"
+authors = [
+    {name = "ApeWorX Ltd.", email = "admin@apeworx.io"}
+]
+license = "Apache-2.0"
+keywords = ["ethereum"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "eth-ape>=0.8.43,<0.9",
+    "ledgereth>=0.10.0,<0.11",
+    "hidapi>=0.15.0",
+    "rich",
+    "ethpm-types",  # Use same version as eth-ape
+    "eip712>=0.3",
+    "eth-account",
+    "eth-utils",
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/ApeWorX/ape-ledger"
+
+[dependency-groups]
+docs = [
+    "sphinx-ape",
+]
+test = [
+    "pytest>=6.0",
+    "pytest-xdist",
+    "pytest-cov",
+    "hypothesis>=6.2.0,<7",
+]
+lint = [
+    "mypy>=1.15.0,<2",
+    "types-setuptools",
+    "ruff>=0.9.0",
+    "mdformat>=0.7.22",
+    "mdformat-gfm>=0.3.5",
+    "mdformat-frontmatter>=0.4.1",
+    "mdformat-pyproject>=0.0.2",
+]
+dev = [
+    {include-group = "test"},
+    {include-group = "lint"},
+    {include-group = "docs"},
+    "commitlint",
+    "prek",
+    "pytest-watch",
+    "IPython",
+    "ipdb",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = ["tests", "tests.*"]
+
+[tool.setuptools.package-data]
+ape_ledger = ["py.typed"]
+
+[tool.setuptools_scm]
+write_to = "ape_ledger/version.py"
 
 [tool.mypy]
 exclude = "build/"
 plugins = ["pydantic.mypy"]
 
-[tool.setuptools_scm]
-write_to = "ape_ledger/version.py"
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "UP",     # pyupgrade
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "DTZ",    # flake8-datetimez
+    "T10",    # flake8-debugger (catches breakpoint/pdb)
+    "T20",    # flake8-print
+    "PYI",    # flake8-pyi
+    "PT",     # flake8-pytest-style
+    "RET",    # flake8-return
+    "SIM",    # flake8-simplify
+    "TC",     # flake8-type-checking
+    "ARG",    # flake8-unused-arguments
+]
+ignore = [
+    "TC003",  # Move stdlib import into TYPE_CHECKING block
+]
+
+[tool.ruff.lint.per-file-ignores]
+"ape_ledger/**/*.py" = ["RET504", "N818", "B904", "ARG001", "ARG002", "ARG005", "SIM108"]
+"version.py" = ["ALL"]
+"__init__.py" = ["F401"]
+"tests/**/*.py" = ["ARG001", "ARG002", "PT007", "PT011", "RET504", "N818", "ARG005", "SIM108"]  # Pytest fixtures may appear unused
+
+[tool.ruff.lint.isort]
+force-wrap-aliases = true
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 [tool.pytest.ini_options]
 addopts = """
-	-p no:ape_test
-	--cov-branch
-	--cov-report term
-	--cov-report html
-	--cov-report xml
-	--cov=ape_ledger
+    -p no:ape_test
+    --cov-branch
+    --cov-report term
+    --cov-report html
+    --cov-report xml
+    --cov=ape_ledger
 """
 python_files = "test_*.py"
 testpaths = "tests"
 markers = "fuzzing: Run Hypothesis fuzz test suite"
-
-[tool.ruff]
-target-version = "py310"
-line-length = 100
-extend-exclude = ["ape_ledger/version.py"]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
-
-[tool.ruff.lint.isort]
-known-first-party = ["ape_ledger"]
-
-[tool.ruff.format]
-quote-style = "double"
-line-ending = "auto"
-indent-style = "space"
-docstring-code-format = true
 
 [tool.mdformat]
 number = true
