@@ -44,8 +44,8 @@ ape ledger add <alias>
 Ledger accounts have the following capabilities in `ape`:
 
 1. Can sign transactions
-2. Can sign messages using the default EIP-191 specification
-3. Can sign messages using the EIP-712 specification
+1. Can sign messages using the default EIP-191 specification
+1. Can sign messages using the EIP-712 specification
 
 ### Adjust HD Path
 

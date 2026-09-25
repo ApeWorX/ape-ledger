@@ -1,4 +1,5 @@
 import atexit
+import contextlib
 from typing import TYPE_CHECKING
 
 import hid  # type: ignore
@@ -60,10 +61,8 @@ def _close_cached_dongle() -> None:
     global _dongle_cache
     if _dongle_cache is not None:
         logger.info("Closing device.")
-        try:
+        with contextlib.suppress(Exception):
             _dongle_cache.close()
-        except Exception:
-            pass
         _dongle_cache = None
 
 
