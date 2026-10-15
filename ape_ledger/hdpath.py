@@ -13,7 +13,7 @@ class HDPath:
         if isinstance(path, str):
             path_str = path
         else:
-            path_str = cast("HDBasePath", path).path
+            path_str = cast("HDBasePath", path).path  # type: ignore[has-type]
 
         path_str = path_str.rstrip("/")
         if not path_str.startswith("m/"):
@@ -71,11 +71,12 @@ class HDBasePath(HDPath):
     """
 
     def __init__(self, base_path: "HDBasePath | str | None" = None):
-        base_path = base_path or "m/44'/60'/{x}'/0/0"
-        if not isinstance(base_path, str) and hasattr(base_path, "path"):
-            base_path_str = base_path.path
-        else:
+        if base_path is None:
+            base_path_str = "m/44'/60'/{x}'/0/0"
+        elif isinstance(base_path, str):
             base_path_str = base_path
+        else:
+            base_path_str = cast("HDBasePath", base_path).path  # type: ignore[has-type]
 
         base_path_str = base_path_str.rstrip("/")
         base_path_str = base_path_str if "{x}" in base_path_str else f"{base_path_str}/{{x}}"
