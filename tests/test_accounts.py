@@ -70,7 +70,7 @@ def create_static_fee_txn(
     receiver: "AddressType | None" = None,
 ) -> StaticFeeTransaction:
     txn = StaticFeeTransaction()
-    txn = cast(StaticFeeTransaction, build_transaction(txn, receiver=receiver))
+    txn = cast("StaticFeeTransaction", build_transaction(txn, receiver=receiver))
     txn.gas_price = 1
     return txn
 
@@ -79,7 +79,7 @@ def create_dynamic_fee_txn(
     receiver: "AddressType | None" = None,
 ) -> DynamicFeeTransaction:
     txn = DynamicFeeTransaction()
-    txn = cast(DynamicFeeTransaction, build_transaction(txn, receiver=receiver))
+    txn = cast("DynamicFeeTransaction", build_transaction(txn, receiver=receiver))
     txn.max_fee = 300000000
     txn.max_priority_fee = 10000000
     return txn
