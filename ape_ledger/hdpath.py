@@ -1,4 +1,5 @@
 import struct
+from typing import cast
 
 
 class HDPath:
@@ -9,11 +10,10 @@ class HDPath:
     """
 
     def __init__(self, path: "HDBasePath | str"):
-        if not isinstance(path, str) and hasattr(path, "path"):
-            # NOTE: Using getattr for mypy
-            path_str = getattr(path, "path")
-        else:
+        if isinstance(path, str):
             path_str = path
+        else:
+            path_str = cast("HDBasePath", path).path
 
         path_str = path_str.rstrip("/")
         if not path_str.startswith("m/"):
