@@ -40,6 +40,9 @@ dynamic = ["version"]
 [project.urls]
 Homepage = "https://github.com/ApeWorX/ape-ledger"
 
+[project.entry-points."ape_cli_subcommands"]
+ape_ledger = "ape_ledger._cli:cli"
+
 [dependency-groups]
 docs = [
     "sphinx-ape",
