@@ -7,7 +7,7 @@
     function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
     setColorMode(localStorage._theme||"auto");
   </script><link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=e1a1ceaf" />
-    <link rel="stylesheet" type="text/css" href="../_static/shibuya.css?v=44020203" />
+    <link rel="stylesheet" type="text/css" href="../_static/shibuya.css?v=2ceb65ce" />
     <link media="print" rel="stylesheet" type="text/css" href="../_static/print.css?v=20ff2c19" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,7 +18,8 @@
   --sy-f-heading: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
 }
 </style>
-    <meta property="og:type" content="website"/>
+    
+  <meta property="og:type" content="website"/>
   <meta property="og:url" content="ape-ledger/userguides/quickstart.html"/>
   <meta property="og:title" content="Quick Start"/>
     <meta name="twitter:card" content="summary"/>
@@ -151,26 +152,26 @@ data-aria-dark="Switch to auto color mode">
   </div>
 </div><article class="yue" role="main">
           <section id="quick-start">
-<h1>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h1>
+<h1>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading">#</a></h1>
 <p>Ape Ledger is a plugin for Ape Framework which integrates with Ledger devices
 to load and create accounts, sign messages, and sign transactions.</p>
 <section id="dependencies">
-<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h2>
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading">#</a></h2>
 <ul class="simple">
 <li><p><a class="reference external" href="https://www.python.org/downloads">python3</a> version 3.9 up to 3.12.</p></li>
 </ul>
 </section>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">#</a></h2>
 <section id="via-pip">
-<h3>via <code class="docutils literal notranslate"><span class="pre">pip</span></code><a class="headerlink" href="#via-pip" title="Link to this heading"></a></h3>
+<h3>via <code class="docutils literal notranslate"><span class="pre">pip</span></code><a class="headerlink" href="#via-pip" title="Link to this heading">#</a></h3>
 <p>You can install the latest release via <a class="reference external" href="https://pypi.org/project/pip/"><code class="docutils literal notranslate"><span class="pre">pip</span></code></a>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span data-line="1">pip<span class="w"> </span>install<span class="w"> </span>ape-ledger
 </span></pre></div>
 </div>
 </section>
 <section id="via-setuptools">
-<h3>via <code class="docutils literal notranslate"><span class="pre">setuptools</span></code><a class="headerlink" href="#via-setuptools" title="Link to this heading"></a></h3>
+<h3>via <code class="docutils literal notranslate"><span class="pre">setuptools</span></code><a class="headerlink" href="#via-setuptools" title="Link to this heading">#</a></h3>
 <p>You can clone the repository and use <a class="reference external" href="https://github.com/pypa/setuptools"><code class="docutils literal notranslate"><span class="pre">setuptools</span></code></a> for the most up-to-date version:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span data-line="1">git<span class="w"> </span>clone<span class="w"> </span>https://github.com/ApeWorX/ape-ledger.git
 </span><span data-line="2"><span class="nb">cd</span><span class="w"> </span>ape-ledger
@@ -180,7 +181,7 @@ to load and create accounts, sign messages, and sign transactions.</p>
 </section>
 </section>
 <section id="quick-usage">
-<h2>Quick Usage<a class="headerlink" href="#quick-usage" title="Link to this heading"></a></h2>
+<h2>Quick Usage<a class="headerlink" href="#quick-usage" title="Link to this heading">#</a></h2>
 <p>You must:</p>
 <ul class="simple">
 <li><p>have the Ledger USB device connected</p></li>
@@ -198,9 +199,9 @@ to load and create accounts, sign messages, and sign transactions.</p>
 <li><p>Can sign messages using the EIP-712 specification</p></li>
 </ol>
 <section id="adjust-hd-path">
-<h3>Adjust HD Path<a class="headerlink" href="#adjust-hd-path" title="Link to this heading"></a></h3>
+<h3>Adjust HD Path<a class="headerlink" href="#adjust-hd-path" title="Link to this heading">#</a></h3>
 <p>If you need to adjust your HD path, use the <code class="docutils literal notranslate"><span class="pre">--hd-path</span></code> flag when adding the account.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span data-line="1">ape<span class="w"> </span>ledger<span class="w"> </span>add<span class="w"> </span>&lt;alias&gt;<span class="w"> </span>--hd-path<span class="w"> </span><span class="s2">&quot;m/44&#39;/60&#39;/0&#39;/0/{x}&quot;</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span data-line="1">ape<span class="w"> </span>ledger<span class="w"> </span>add<span class="w"> </span>&lt;alias&gt;<span class="w"> </span>--hd-path<span class="w"> </span><span class="s2">"m/44'/60'/0'/0/{x}"</span>
 </span></pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">{x}</span></code> indicates the account node. Note that excluding <code class="docutils literal notranslate"><span class="pre">{x}</span></code> assumes the account node is at the end
@@ -210,21 +211,21 @@ See https://github.com/MyCryptoHQ/MyCrypto/issues/2070 for more information.</p>
 </section>
 </section>
 <section id="list-accounts">
-<h2>List accounts<a class="headerlink" href="#list-accounts" title="Link to this heading"></a></h2>
+<h2>List accounts<a class="headerlink" href="#list-accounts" title="Link to this heading">#</a></h2>
 <p>To list just your Ledger accounts in <code class="docutils literal notranslate"><span class="pre">ape</span></code>, do:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span data-line="1">ape<span class="w"> </span>ledger<span class="w"> </span>list
 </span></pre></div>
 </div>
 </section>
 <section id="remove-accounts">
-<h2>Remove accounts<a class="headerlink" href="#remove-accounts" title="Link to this heading"></a></h2>
+<h2>Remove accounts<a class="headerlink" href="#remove-accounts" title="Link to this heading">#</a></h2>
 <p>You can also remove accounts:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span data-line="1">ape<span class="w"> </span>ledger<span class="w"> </span>delete<span class="w"> </span>&lt;alias&gt;
 </span></pre></div>
 </div>
 </section>
 <section id="development">
-<h2>Development<a class="headerlink" href="#development" title="Link to this heading"></a></h2>
+<h2>Development<a class="headerlink" href="#development" title="Link to this heading">#</a></h2>
 <p>Please see the <a class="reference external" href="CONTRIBUTING.md">contributing guide</a> to learn more how to contribute to this project.
 Comments, questions, criticisms and pull requests are welcomed.</p>
 </section>
@@ -268,5 +269,5 @@ Comments, questions, criticisms and pull requests are welcomed.</p>
       <script src="../_static/doctools.js?v=9bcbadda"></script>
       <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
       <script data-domain="docs.apeworx.io" defer="defer" src="https://plausible.io/js/script.js"></script>
-      <script src="../_static/shibuya.js?v=cac61aee"></script></body>
+      <script src="../_static/shibuya.js?v=50760d75"></script></body>
 </html>
